@@ -1,12 +1,12 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAppContext } from '../../store/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { Leaf, LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 import { motion, useScroll, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import { clsx } from 'clsx';
 
 export const Navbar = () => {
-  const { currentUser, logout } = useAppContext();
+  const { user: currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { scrollY } = useScroll();

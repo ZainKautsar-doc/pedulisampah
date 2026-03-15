@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './store/AppContext';
-
-// Public Pages
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';// Public Pages
 import { Home } from './pages/public/Home';
 import { Login } from './pages/public/Login';
 import { MapPage } from './pages/public/MapPage';
@@ -24,8 +24,9 @@ import { ProfilKomunitas } from './pages/dashboard/komunitas/ProfilKomunitas';
 
 export default function App() {
   return (
-    <AppProvider>
-      <Router>
+    <AuthProvider>
+      <AppProvider>
+        <Router>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
@@ -35,23 +36,24 @@ export default function App() {
           <Route path="/tentang" element={<About />} />
 
           {/* Dashboard Warga */}
-          <Route path="/dashboard/warga" element={<DashboardWarga />} />
-          <Route path="/dashboard/warga/lapor" element={<LaporSampah />} />
-          <Route path="/dashboard/warga/riwayat" element={<RiwayatLaporan />} />
-          <Route path="/dashboard/warga/reward" element={<RewardRedeem />} />
-          <Route path="/dashboard/warga/profil" element={<ProfilWarga />} />
+          <Route path="/dashboard/warga" element={<ProtectedRoute><DashboardWarga /></ProtectedRoute>} />
+          <Route path="/dashboard/warga/lapor" element={<ProtectedRoute><LaporSampah /></ProtectedRoute>} />
+          <Route path="/dashboard/warga/riwayat" element={<ProtectedRoute><RiwayatLaporan /></ProtectedRoute>} />
+          <Route path="/dashboard/warga/reward" element={<ProtectedRoute><RewardRedeem /></ProtectedRoute>} />
+          <Route path="/dashboard/warga/profil" element={<ProtectedRoute><ProfilWarga /></ProtectedRoute>} />
 
           {/* Dashboard Komunitas */}
-          <Route path="/dashboard/komunitas" element={<DashboardKomunitas />} />
-          <Route path="/dashboard/komunitas/laporan" element={<LaporanMasuk />} />
-          <Route path="/dashboard/komunitas/jadwal" element={<JadwalPengangkutan />} />
-          <Route path="/dashboard/komunitas/reward" element={<KelolaReward />} />
-          <Route path="/dashboard/komunitas/profil" element={<ProfilKomunitas />} />
+          <Route path="/dashboard/komunitas" element={<ProtectedRoute><DashboardKomunitas /></ProtectedRoute>} />
+          <Route path="/dashboard/komunitas/laporan" element={<ProtectedRoute><LaporanMasuk /></ProtectedRoute>} />
+          <Route path="/dashboard/komunitas/jadwal" element={<ProtectedRoute><JadwalPengangkutan /></ProtectedRoute>} />
+          <Route path="/dashboard/komunitas/reward" element={<ProtectedRoute><KelolaReward /></ProtectedRoute>} />
+          <Route path="/dashboard/komunitas/profil" element={<ProtectedRoute><ProfilKomunitas /></ProtectedRoute>} />
           
           {/* Admin Route (Placeholder) */}
-          <Route path="/dashboard/admin" element={<div className="p-8 text-center text-xl font-bold">Admin Dashboard (Coming Soon)</div>} />
+          <Route path="/dashboard/admin" element={<ProtectedRoute><div className="p-8 text-center text-xl font-bold">Admin Dashboard (Coming Soon)</div></ProtectedRoute>} />
         </Routes>
       </Router>
     </AppProvider>
+    </AuthProvider>
   );
 }

@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 export type Role = 'warga' | 'komunitas' | 'admin' | null;
 
@@ -132,6 +133,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [rewards, setRewards] = useState<Reward[]>(initialRewards);
   const [redeemHistory, setRedeemHistory] = useState<RedeemHistory[]>([]);
   const [pickupSchedules, setPickupSchedules] = useState<PickupSchedule[]>([]);
+
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    // Sync the Supabase Auth user to the legacy AppContext user
+    if (user) {
+      setCurrentUser({
+        id: user.id,
+        name: user.name || user.email,
+        role: user.role,
+        points: 0, // Default for new users or if not stored in users table yet
+        ...user
+      });
+    } else {
+      setCurrentUser(null);
+    }
+  }, [user]);
 
   const login = (role: Role) => {
     const user = users.find(u => u.role === role);

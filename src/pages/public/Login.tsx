@@ -1,16 +1,42 @@
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PublicLayout } from '../../components/layout/PublicLayout';
-import { useAppContext, Role } from '../../store/AppContext';
-import { Leaf, User, Users, ShieldAlert } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
+import { Leaf, Mail, Lock, AlertCircle, ShieldAlert, User } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const Login = () => {
-  const { login } = useAppContext();
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (role: Role) => {
-    login(role);
-    navigate(`/dashboard/${role}`);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const { role } = await login(email, password);
+      // Redirect berdasarkan role
+      if (role === 'warga') navigate('/dashboard/warga');
+      else if (role === 'komunitas') navigate('/dashboard/komunitas');
+      else if (role === 'admin') navigate('/dashboard/admin');
+      else navigate('/dashboard/warga');
+    } catch (err) {
+      setError('Email atau password salah.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginAsDemo = (role: 'warga' | 'admin') => {
+    const demoEmail = role === 'warga' ? 'warga@pedulisampah.com' : 'admin@pedulisampah.com';
+    const demoPassword = '12345678';
+    setEmail(demoEmail);
+    setPassword(demoPassword);
   };
 
   return (
@@ -26,7 +52,7 @@ export const Login = () => {
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, type: 'spring', stiffness: 200, damping: 20 }}
-          className="max-w-md w-full space-y-8 glass-card p-10 rounded-3xl shadow-2xl border border-white/50 relative z-10"
+          className="max-w-md w-full space-y-8 glass-card p-10 rounded-3xl shadow-2xl border border-white/50 relative z-10 bg-white/60 backdrop-blur-xl"
         >
           <div className="text-center">
             <motion.div 
@@ -38,48 +64,96 @@ export const Login = () => {
               <Leaf className="h-8 w-8 text-emerald-600" />
             </motion.div>
             <h2 className="mt-6 text-3xl font-bold text-slate-900 tracking-tight">
-              Pilih Peran Anda
+              Selamat Datang
             </h2>
-            <p className="mt-2 text-sm text-slate-500 font-medium">
-              Prototype mode: Login tanpa password
+            <p className="mt-2 text-sm text-slate-500 font-medium pb-2">
+              Masuk ke akun Anda untuk melanjutkan
             </p>
           </div>
-          <div className="mt-8 space-y-4">
-            <motion.button
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleLogin('warga')}
-              className="group relative w-full flex justify-center py-4 px-4 border border-emerald-100 text-sm font-bold rounded-2xl text-emerald-800 bg-gradient-to-r from-emerald-50 to-teal-50/50 hover:from-emerald-100 hover:to-teal-100/50 transition-all shadow-sm overflow-hidden"
+
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium flex items-center gap-2 border border-red-100"
+              >
+                <AlertCircle className="h-5 w-5" />
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-slate-700 block mb-1.5" htmlFor="email">Email</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-white/50 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors shadow-sm sm:text-sm text-slate-900 placeholder:text-slate-400"
+                    placeholder="Masukkan email"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-700 block mb-1.5" htmlFor="password">Password</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl bg-white/50 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors shadow-sm sm:text-sm text-slate-900 placeholder:text-slate-400"
+                    placeholder="Masukkan password"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span className="absolute left-0 inset-y-0 flex items-center pl-4">
-                <User className="h-5 w-5 text-emerald-500 group-hover:text-emerald-600 transition-colors" />
-              </span>
-              Masuk sebagai Warga
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleLogin('komunitas')}
-              className="group relative w-full flex justify-center py-4 px-4 border border-teal-100 text-sm font-bold rounded-2xl text-teal-800 bg-gradient-to-r from-teal-50 to-cyan-50/50 hover:from-teal-100 hover:to-cyan-100/50 transition-all shadow-sm overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <span className="absolute left-0 inset-y-0 flex items-center pl-4">
-                <Users className="h-5 w-5 text-teal-500 group-hover:text-teal-600 transition-colors" />
-              </span>
-              Masuk sebagai Komunitas
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleLogin('admin')}
-              className="group relative w-full flex justify-center py-4 px-4 border border-slate-200 text-sm font-bold rounded-2xl text-slate-700 bg-white hover:bg-slate-50 transition-all shadow-sm"
-            >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-4">
-                <ShieldAlert className="h-5 w-5 text-slate-400 group-hover:text-slate-500 transition-colors" />
-              </span>
-              Masuk sebagai Admin
-            </motion.button>
+              {isLoading ? 'Memproses...' : 'Masuk'}
+            </button>
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-200/60">
+            <p className="text-xs text-center text-slate-500 font-medium mb-4">
+              Gunakan akun demo untuk mencoba aplikasi
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => loginAsDemo('warga')}
+                className="flex items-center justify-center gap-2 py-2 px-3 border border-emerald-100 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+              >
+                <User className="h-3.5 w-3.5" />
+                Demo Warga
+              </button>
+              <button
+                type="button"
+                onClick={() => loginAsDemo('admin')}
+                className="flex items-center justify-center gap-2 py-2 px-3 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+              >
+                <ShieldAlert className="h-3.5 w-3.5 text-slate-500" />
+                Demo Admin
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
