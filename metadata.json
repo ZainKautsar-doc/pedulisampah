@@ -1,0 +1,7 @@
+{
+  "name": "PeduliSampah",
+  "description": "Platform komunitas untuk melaporkan, memantau, dan mengelola sampah di lingkungan.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

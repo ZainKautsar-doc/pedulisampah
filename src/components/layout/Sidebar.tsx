@@ -1,0 +1,84 @@
+import { NavLink } from 'react-router-dom';
+import { useAppContext } from '../../store/AppContext';
+import { 
+  LayoutDashboard, 
+  MapPin, 
+  History, 
+  Gift, 
+  User, 
+  Inbox, 
+  CheckSquare, 
+  CalendarClock, 
+  Settings 
+} from 'lucide-react';
+import { clsx } from 'clsx';
+import { motion } from 'framer-motion';
+
+export const Sidebar = () => {
+  const { currentUser } = useAppContext();
+
+  if (!currentUser) return null;
+
+  const wargaLinks = [
+    { name: 'Dashboard', path: '/dashboard/warga', icon: LayoutDashboard },
+    { name: 'Laporkan Sampah', path: '/dashboard/warga/lapor', icon: MapPin },
+    { name: 'Riwayat Laporan', path: '/dashboard/warga/riwayat', icon: History },
+    { name: 'Reward & Redeem', path: '/dashboard/warga/reward', icon: Gift },
+    { name: 'Profil', path: '/dashboard/warga/profil', icon: User },
+  ];
+
+  const komunitasLinks = [
+    { name: 'Dashboard', path: '/dashboard/komunitas', icon: LayoutDashboard },
+    { name: 'Laporan Masuk', path: '/dashboard/komunitas/laporan', icon: Inbox },
+    { name: 'Jadwal Pengangkutan', path: '/dashboard/komunitas/jadwal', icon: CalendarClock },
+    { name: 'Kelola Reward', path: '/dashboard/komunitas/reward', icon: Settings },
+    { name: 'Profil', path: '/dashboard/komunitas/profil', icon: User },
+  ];
+
+  const links = currentUser.role === 'warga' ? wargaLinks : komunitasLinks;
+
+  return (
+    <div className="w-64 bg-white/80 backdrop-blur-md border-r border-slate-200/50 h-[calc(100vh-5rem)] sticky top-20 overflow-y-auto hidden md:block z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+      <div className="p-4">
+        <div className="space-y-1.5">
+          {links.map((link, index) => {
+            const Icon = link.icon;
+            return (
+              <NavLink
+                key={link.name}
+                to={link.path}
+                end={link.path === '/dashboard/warga' || link.path === '/dashboard/komunitas'}
+                className={({ isActive }) =>
+                  clsx(
+                    'flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 relative overflow-hidden group',
+                    isActive
+                      ? 'text-emerald-700 bg-emerald-50/80 shadow-sm border border-emerald-100/50'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent'
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeSidebarTab"
+                        className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-r-full"
+                        initial={false}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                    <Icon className={clsx(
+                      "mr-3 h-5 w-5 flex-shrink-0 transition-colors duration-200",
+                      isActive ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500"
+                    )} />
+                    <span className="relative z-10">{link.name}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
