@@ -6,7 +6,7 @@ import { Navigate } from 'react-router-dom';
 import { useAppContext } from '../../store/AppContext';
 import { motion } from 'framer-motion';
 
-export const DashboardLayout = ({ children, requiredRole }: { children: ReactNode, requiredRole?: 'warga' | 'komunitas' }) => {
+export const DashboardLayout = ({ children, requiredRole }: { children: ReactNode, requiredRole?: 'warga' | 'komunitas' | 'admin' }) => {
   const { currentUser } = useAppContext();
 
   if (!currentUser) {
@@ -14,7 +14,13 @@ export const DashboardLayout = ({ children, requiredRole }: { children: ReactNod
   }
 
   if (requiredRole && currentUser.role !== requiredRole) {
-    return <Navigate to={`/dashboard/${currentUser.role}`} replace />;
+    const getRedirectPath = (role: 'warga' | 'komunitas' | 'admin' | null) => {
+      if (role === 'warga') return '/dashboard';
+      if (role === 'komunitas') return '/dashboard-komunitas';
+      if (role === 'admin') return '/dashboard/admin';
+      return '/login';
+    };
+    return <Navigate to={getRedirectPath(currentUser.role)} replace />;
   }
 
   return (

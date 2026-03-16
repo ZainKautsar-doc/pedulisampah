@@ -1,0 +1,272 @@
+import React, { useEffect, useState } from 'react';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { supabase } from '../../lib/supabaseClient';
+import { Gift, Plus, Search, Edit2, Trash2 } from 'lucide-react';
+
+export const AdminRewards = () => {
+  const [rewards, setRewards] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    points_required: 0,
+    stock: 0,
+    image_url: ''
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchRewards();
+  }, []);
+
+  const fetchRewards = async () => {
+    setLoading(true);
+    try {
+      const { data } = await supabase.from('rewards').select('*').order('created_at', { ascending: false });
+      if (data) setRewards(data);
+    } catch (error) {
+      console.error('Error fetching rewards:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      if (editingId) {
+        // Update existing
+        const { data, error } = await supabase
+          .from('rewards')
+          .update(formData)
+          .eq('id', editingId)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        setRewards(rewards.map(r => r.id === editingId ? data : r));
+      } else {
+        // Insert new
+        const { data, error } = await supabase
+          .from('rewards')
+          .insert([formData])
+          .select()
+          .single();
+          
+        if (error) throw error;
+        setRewards([data, ...rewards]);
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Error saving reward:', error);
+      alert('Gagal menyimpan reward.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus reward ini?')) return;
+    try {
+      const { error } = await supabase.from('rewards').delete().eq('id', id);
+      if (error) throw error;
+      setRewards(rewards.filter(r => r.id !== id));
+    } catch (error) {
+      console.error('Error deleting reward:', error);
+      alert('Gagal menghapus reward. Mungkin masih ada histori penukaran.');
+    }
+  };
+
+  const editReward = (reward: any) => {
+    setFormData({
+      title: reward.title || '',
+      description: reward.description || '',
+      points_required: reward.points_required || 0,
+      stock: reward.stock || 0,
+      image_url: reward.image_url || ''
+    });
+    setEditingId(reward.id);
+    setShowForm(true);
+  };
+
+  const resetForm = () => {
+    setFormData({ title: '', description: '', points_required: 0, stock: 0, image_url: '' });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
+  const filteredRewards = rewards.filter(r => 
+    r.title?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  return (
+    <DashboardLayout requiredRole="admin">
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Kelola Reward</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              CRUD katalog hadiah yang bisa ditukarkan oleh user.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Cari reward..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 text-sm py-2 px-4 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-64"
+              />
+            </div>
+            <button 
+              onClick={() => { resetForm(); setShowForm(true); }}
+              className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors text-sm font-medium"
+            >
+              <Plus className="h-4 w-4" /> Tambah Reward
+            </button>
+          </div>
+        </div>
+
+        {showForm && (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h3 className="text-lg font-bold text-slate-900 mb-4">{editingId ? 'Edit Reward' : 'Tambah Reward Baru'}</h3>
+            <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Nama Reward</label>
+                <input 
+                  type="text" 
+                  required
+                  value={formData.title}
+                  onChange={e => setFormData({...formData, title: e.target.value})}
+                  className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">URL Gambar</label>
+                <input 
+                  type="url" 
+                  value={formData.image_url}
+                  onChange={e => setFormData({...formData, image_url: e.target.value})}
+                  placeholder="https://example.com/image.png"
+                  className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Deskripsi</label>
+                <textarea 
+                  required
+                  rows={2}
+                  value={formData.description}
+                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Poin yang Dibutuhkan</label>
+                <input 
+                  type="number" 
+                  required
+                  min="0"
+                  value={formData.points_required}
+                  onChange={e => setFormData({...formData, points_required: parseInt(e.target.value)})}
+                  className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Stok Bawaan</label>
+                <input 
+                  type="number" 
+                  required
+                  min="0"
+                  value={formData.stock}
+                  onChange={e => setFormData({...formData, stock: parseInt(e.target.value)})}
+                  className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="md:col-span-2 flex justify-end gap-3 mt-2">
+                <button 
+                  type="button" 
+                  onClick={resetForm}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={saving}
+                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {saving ? 'Menyimpan...' : 'Simpan Reward'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Rewards List */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <div className="col-span-full text-center py-12 text-slate-500">Memuat katalog reward...</div>
+          ) : filteredRewards.length > 0 ? (
+            filteredRewards.map((reward) => (
+              <div key={reward.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col group">
+                <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
+                  <img 
+                    src={reward.image_url || 'https://picsum.photos/400/300?grayscale'} 
+                    alt={reward.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-bold text-emerald-600 shadow-sm flex items-center gap-1">
+                    <Gift className="h-4 w-4" />
+                    {reward.points_required} Pts
+                  </div>
+                </div>
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-slate-900">{reward.title}</h3>
+                    <span className="text-xs font-medium px-2 py-1 bg-slate-100 rounded text-slate-600 whitespace-nowrap ml-2">
+                      Stok: {reward.stock}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 flex-1 line-clamp-2">
+                    {reward.description}
+                  </p>
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                    <button 
+                      onClick={() => editReward(reward)}
+                      className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
+                    >
+                      <Edit2 className="h-4 w-4" /> Edit
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(reward.id)}
+                      className="flex-none flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-xl transition-colors"
+                      title="Hapus Reward"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12 bg-white rounded-2xl border border-dashed border-slate-300 shadow-sm">
+              <Gift className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+              <h3 className="text-lg font-medium text-slate-900 mb-1">Daftar Reward Kosong</h3>
+              <p className="text-slate-500 text-sm">Belum ada reward yang ditambahkan atau tidak ada yang cocok dengan pencarian.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+};

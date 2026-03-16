@@ -44,7 +44,9 @@ export const Navbar = () => {
     { name: 'Tentang', path: '/tentang' },
   ];
 
-  const profilePath = currentUser?.role === 'warga' ? '/dashboard/warga/profil' : '/dashboard/komunitas/profil';
+  const profilePath = currentUser?.role === 'warga' ? '/dashboard/profil' : 
+                      currentUser?.role === 'komunitas' ? '/dashboard-komunitas/profil' : 
+                      '/dashboard/admin';
 
   return (
     <>
@@ -64,7 +66,7 @@ export const Navbar = () => {
                 <span className="font-bold text-xl text-slate-900 tracking-tight">PeduliSampah</span>
               </Link>
               
-              <div className="hidden sm:flex sm:space-x-1">
+              <div className="hidden md:flex md:space-x-1">
                 {navLinks.map((link) => {
                   const isActive = location.pathname === link.path;
                   return (
