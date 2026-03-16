@@ -6,6 +6,8 @@ import {
   FileText,
   Trophy,
   User,
+  Gift,
+  History,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -23,8 +25,8 @@ export const BottomNav = () => {
   const wargaLinks = [
     { name: "Beranda", path: "/dashboard", icon: Home },
     { name: "Laporan", path: "/dashboard/lapor", icon: FileText },
+    { name: "Reward", path: "/dashboard/reward", icon: Gift },
     { name: "Peta", path: "/peta", icon: MapPin },
-    { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
     { name: "Profil", path: "/dashboard/profil", icon: User },
   ];
 
@@ -39,8 +41,8 @@ export const BottomNav = () => {
   const adminLinks = [
     { name: "Beranda", path: "/dashboard/admin", icon: Home },
     { name: "Laporan", path: "/dashboard/admin/reports", icon: FileText },
-    { name: "Peta", path: "/peta", icon: MapPin },
-    { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
+    { name: "Reward", path: "/dashboard/admin/rewards", icon: Gift },
+    { name: "Redeem", path: "/dashboard/admin/redeems", icon: History },
     { name: "Profil", path: "/dashboard/admin", icon: User },
   ];
 

@@ -10,7 +10,7 @@ export const AdminRewards = () => {
   const [stats, setStats] = useState({ totalRewards: 0, totalRedeems: 0 });
 
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | number | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -57,11 +57,30 @@ export const AdminRewards = () => {
     e.preventDefault();
     setSaving(true);
     try {
+      const pointsRequired = Number(formData.points_required);
+      const stock = Number(formData.stock);
+
+      if (!Number.isFinite(pointsRequired) || pointsRequired < 0) {
+        throw new Error('Poin yang dibutuhkan harus berupa angka 0 atau lebih.');
+      }
+
+      if (!Number.isFinite(stock) || stock < 0) {
+        throw new Error('Stok harus berupa angka 0 atau lebih.');
+      }
+
+      const payload = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        points_required: Math.floor(pointsRequired),
+        stock: Math.floor(stock),
+        image_url: formData.image_url.trim() ? formData.image_url.trim() : null
+      };
+
       if (editingId) {
         // Update existing
         const { data, error } = await supabase
           .from('rewards')
-          .update(formData)
+          .update(payload)
           .eq('id', editingId)
           .select()
           .single();
@@ -72,7 +91,7 @@ export const AdminRewards = () => {
         // Insert new
         const { data, error } = await supabase
           .from('rewards')
-          .insert([formData])
+          .insert([payload])
           .select()
           .single();
           
@@ -83,13 +102,18 @@ export const AdminRewards = () => {
       fetchStats();
     } catch (error) {
       console.error('Error saving reward:', error);
-      alert('Gagal menyimpan reward.');
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      if (message.toLowerCase().includes('row-level security')) {
+        alert('Gagal menyimpan reward: akses ditolak oleh policy database (RLS). Pastikan akun admin punya izin INSERT/UPDATE tabel rewards.');
+      } else {
+        alert(`Gagal menyimpan reward. Detail: ${message}`);
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string | number) => {
     if (!window.confirm('Apakah Anda yakin ingin menghapus reward ini?')) return;
     try {
       const { error } = await supabase.from('rewards').delete().eq('id', id);
@@ -207,7 +231,7 @@ export const AdminRewards = () => {
                   required
                   min="0"
                   value={formData.points_required}
-                  onChange={e => setFormData({...formData, points_required: parseInt(e.target.value)})}
+                  onChange={e => setFormData({...formData, points_required: e.target.value === '' ? 0 : Number(e.target.value)})}
                   className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -218,7 +242,7 @@ export const AdminRewards = () => {
                   required
                   min="0"
                   value={formData.stock}
-                  onChange={e => setFormData({...formData, stock: parseInt(e.target.value)})}
+                  onChange={e => setFormData({...formData, stock: e.target.value === '' ? 0 : Number(e.target.value)})}
                   className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
