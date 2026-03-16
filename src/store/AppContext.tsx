@@ -69,6 +69,7 @@ interface AppState {
   addReward: (reward: Omit<Reward, 'id'>) => void;
   updateReward: (id: string, reward: Partial<Reward>) => void;
   deleteReward: (id: string) => void;
+  updateCurrentUserPoints: (points: number) => void;
 }
 
 const initialUsers: User[] = [
@@ -229,11 +230,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setRewards(rewards.filter(r => r.id !== id));
   };
 
+  const updateCurrentUserPoints = (points: number) => {
+    if (!currentUser) return;
+    setCurrentUser({ ...currentUser, points });
+    setUsers(users.map(u => u.id === currentUser.id ? { ...u, points } : u));
+  };
+
   return (
     <AppContext.Provider value={{
       currentUser, users, reports, rewards, redeemHistory, pickupSchedules,
       login, logout, addReport, updateReportStatus, redeemReward, addSchedule,
-      addReward, updateReward, deleteReward
+      addReward, updateReward, deleteReward, updateCurrentUserPoints
     }}>
       {children}
     </AppContext.Provider>

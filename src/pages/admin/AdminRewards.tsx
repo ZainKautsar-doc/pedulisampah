@@ -7,9 +7,10 @@ export const AdminRewards = () => {
   const [rewards, setRewards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [stats, setStats] = useState({ totalRewards: 0, totalRedeems: 0 });
 
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -21,6 +22,7 @@ export const AdminRewards = () => {
 
   useEffect(() => {
     fetchRewards();
+    fetchStats();
   }, []);
 
   const fetchRewards = async () => {
@@ -32,6 +34,22 @@ export const AdminRewards = () => {
       console.error('Error fetching rewards:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const [{ count: rewardCount }, { count: redeemCount }] = await Promise.all([
+        supabase.from('rewards').select('*', { count: 'exact', head: true }),
+        supabase.from('redeems').select('*', { count: 'exact', head: true })
+      ]);
+
+      setStats({
+        totalRewards: rewardCount || 0,
+        totalRedeems: redeemCount || 0
+      });
+    } catch (error) {
+      console.error('Error fetching reward stats:', error);
     }
   };
 
@@ -62,6 +80,7 @@ export const AdminRewards = () => {
         setRewards([data, ...rewards]);
       }
       resetForm();
+      fetchStats();
     } catch (error) {
       console.error('Error saving reward:', error);
       alert('Gagal menyimpan reward.');
@@ -70,12 +89,13 @@ export const AdminRewards = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm('Apakah Anda yakin ingin menghapus reward ini?')) return;
     try {
       const { error } = await supabase.from('rewards').delete().eq('id', id);
       if (error) throw error;
       setRewards(rewards.filter(r => r.id !== id));
+      fetchStats();
     } catch (error) {
       console.error('Error deleting reward:', error);
       alert('Gagal menghapus reward. Mungkin masih ada histori penukaran.');
@@ -132,6 +152,17 @@ export const AdminRewards = () => {
             >
               <Plus className="h-4 w-4" /> Tambah Reward
             </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <p className="text-sm text-slate-500">Total Reward</p>
+            <p className="text-2xl font-bold text-slate-900 mt-1">{stats.totalRewards}</p>
+          </div>
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <p className="text-sm text-slate-500">Total Redeem</p>
+            <p className="text-2xl font-bold text-slate-900 mt-1">{stats.totalRedeems}</p>
           </div>
         </div>
 

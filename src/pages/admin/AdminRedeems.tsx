@@ -115,7 +115,7 @@ export const AdminRedeems = () => {
                             {redeem.rewards?.title || 'Reward Dihapus'}
                           </div>
                           <span className="text-xs font-medium px-2 py-0.5 bg-amber-50 text-amber-600 rounded">
-                            -{redeem.points_spent} Poin
+                            -{redeem.points_spent ?? redeem.rewards?.points_required ?? 0} Poin
                           </span>
                         </div>
                       </td>
