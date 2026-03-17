@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './store/AppContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';// Public Pages
+import { PublicOnlyRoute } from './components/PublicOnlyRoute';
 import { Home } from './pages/public/Home';
 import { Login } from './pages/public/Login';
 import { RegisterPage } from './pages/public/RegisterPage';
@@ -41,7 +42,7 @@ export default function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/peta" element={<ProtectedRoute><MapPage /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
