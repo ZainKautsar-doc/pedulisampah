@@ -41,7 +41,8 @@ export const Sidebar = () => {
     { name: 'Jadwal Pengangkutan', path: '/dashboard/admin/schedules', icon: CalendarClock },
     { name: 'Kelola Reward', path: '/dashboard/admin/rewards', icon: Gift },
     { name: 'Riwayat Redeem', path: '/dashboard/admin/redeems', icon: History },
-    { name: 'Manajemen User', path: '/dashboard/admin/users', icon: User },
+    { name: 'Manajemen User', path: '/dashboard/admin/users', icon: Settings },
+    { name: 'Profil', path: '/dashboard/admin/profil', icon: User },
   ];
 
   let links = currentUser.role === 'warga' ? wargaLinks : komunitasLinks;

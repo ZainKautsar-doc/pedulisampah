@@ -35,7 +35,7 @@ export const BottomNav = () => {
     user?.role === "komunitas"
       ? "/dashboard-komunitas/profil"
       : user?.role === "admin"
-        ? "/dashboard/admin"
+        ? "/dashboard/admin/profil"
         : "/dashboard/profil";
 
   const authLinks = [

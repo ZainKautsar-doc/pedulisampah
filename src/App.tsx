@@ -15,6 +15,7 @@ import { LaporSampah } from './pages/dashboard/warga/LaporSampah';
 import { RiwayatLaporan } from './pages/dashboard/warga/RiwayatLaporan';
 import { RewardRedeem } from './pages/dashboard/warga/RewardRedeem';
 import { ProfilWarga } from './pages/dashboard/warga/ProfilWarga';
+import { ProfilePage } from './pages/dashboard/ProfilePage';
 
 // Komunitas Pages
 import { DashboardKomunitas } from './pages/dashboard/komunitas/DashboardKomunitas';
@@ -30,6 +31,7 @@ import { AdminSchedules } from './pages/admin/AdminSchedules';
 import { AdminRewards } from './pages/admin/AdminRewards';
 import { AdminRedeems } from './pages/admin/AdminRedeems';
 import { AdminUsers } from './pages/admin/AdminUsers';
+import { AdminProfile } from './pages/admin/AdminProfile';
 
 export default function App() {
   return (
@@ -51,6 +53,7 @@ export default function App() {
           <Route path="/dashboard/riwayat" element={<ProtectedRoute><RiwayatLaporan /></ProtectedRoute>} />
           <Route path="/dashboard/reward" element={<ProtectedRoute><RewardRedeem /></ProtectedRoute>} />
           <Route path="/dashboard/profil" element={<ProtectedRoute><ProfilWarga /></ProtectedRoute>} />
+          <Route path="/profil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
           {/* Dashboard Komunitas */}
           <Route path="/dashboard-komunitas" element={<ProtectedRoute><DashboardKomunitas /></ProtectedRoute>} />
@@ -66,6 +69,7 @@ export default function App() {
           <Route path="/dashboard/admin/rewards" element={<ProtectedRoute><AdminRewards /></ProtectedRoute>} />
           <Route path="/dashboard/admin/redeems" element={<ProtectedRoute><AdminRedeems /></ProtectedRoute>} />
           <Route path="/dashboard/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
+          <Route path="/dashboard/admin/profil" element={<ProtectedRoute><AdminProfile /></ProtectedRoute>} />
         </Routes>
       </Router>
     </AppProvider>

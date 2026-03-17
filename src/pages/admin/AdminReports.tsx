@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { Search, MapPin, Clock, Edit2, X, Check } from 'lucide-react';
+import { Search, MapPin, Clock, Edit2, X, Check, CalendarDays } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const AdminReports = () => {
@@ -54,7 +54,7 @@ export const AdminReports = () => {
           report_id: reportId,
           user_id: user.id,
           status: newStatus,
-          notes: 'Diobahkan melalui panel admin'
+          notes: 'Diubah melalui panel admin'
         });
       }
 
@@ -104,9 +104,18 @@ export const AdminReports = () => {
     r.location_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const normalizeStatus = (status: string) => {
+    let normalized = status?.toLowerCase();
+    if (normalized === 'menunggu verifikasi') normalized = 'pending';
+    if (normalized === 'diproses') normalized = 'scheduled';
+    if (normalized === 'selesai') normalized = 'completed';
+    if (normalized === 'ditolak') normalized = 'rejected';
+    return normalized || 'pending';
+  };
+
   return (
     <DashboardLayout requiredRole="admin">
-      <div className="space-y-6">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Manajemen Laporan</h1>
@@ -115,85 +124,83 @@ export const AdminReports = () => {
             </p>
           </div>
           
-          <div className="relative">
+          <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <input 
               type="text" 
               placeholder="Cari laporan..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 text-sm py-2 px-4 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-64"
+              className="pl-10 text-sm py-2 px-4 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full"
             />
           </div>
         </div>
 
-        <div className="bg-white shadow-sm border border-slate-200 rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Laporan
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Lokasi
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Tanggal
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-slate-200">
-                {loading ? (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
-                      Memuat data reports...
-                    </td>
-                  </tr>
-                ) : filteredReports.length > 0 ? (
-                  filteredReports.map((report) => (
-                    <tr key={report.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          <img 
-                            className="h-12 w-12 rounded-lg object-cover bg-slate-100" 
-                            src={report.photoUrl || report.photo_url || 'https://picsum.photos/400'} 
-                            alt="" 
-                          />
-                          <div className="ml-4">
-                            <div className="text-sm font-bold text-slate-900 line-clamp-1">{report.title}</div>
-                            <div className="text-xs text-slate-500 bg-slate-100 uppercase px-2 py-0.5 rounded inline-block mt-1">
-                              {report.category}
-                            </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 md:p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-sm text-slate-500">
+              {loading ? 'Memuat laporan...' : `${filteredReports.length} laporan ditemukan`}
+            </p>
+          </div>
+
+          <div className="mb-3 hidden lg:grid grid-cols-12 gap-4 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <div className="col-span-6">Laporan & Lokasi</div>
+            <div className="col-span-3">Tanggal & Waktu</div>
+            <div className="col-span-3 text-right">Status & Aksi</div>
+          </div>
+
+          {loading ? (
+            <div className="rounded-xl border border-dashed border-slate-300 px-6 py-14 text-center text-slate-500">
+              Memuat data laporan...
+            </div>
+          ) : filteredReports.length > 0 ? (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {filteredReports.map((report) => (
+                <article
+                  key={report.id}
+                  className="group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+                    <div className="lg:col-span-6">
+                      <div className="flex gap-3">
+                        <img
+                          className="h-20 w-20 rounded-xl object-cover bg-slate-100 shrink-0"
+                          src={report.photoUrl || report.photo_url || 'https://picsum.photos/400'}
+                          alt={report.title || 'Laporan'}
+                        />
+                        <div className="min-w-0">
+                          <h2 className="text-sm font-bold text-slate-900 line-clamp-2">{report.title}</h2>
+                          <div className="mt-2 inline-flex text-[11px] text-slate-600 bg-slate-100 uppercase px-2 py-0.5 rounded">
+                            {report.category || 'Lainnya'}
+                          </div>
+                          <div className="mt-3 space-y-1 text-xs text-slate-600">
+                            <p className="flex items-start gap-1.5">
+                              <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                              <span className="line-clamp-2">{report.location_name || 'Lokasi tidak tersedia'}</span>
+                            </p>
+                            <p className="text-slate-500">{report.lat}, {report.lng}</p>
                           </div>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-900 line-clamp-1">{report.location_name || 'Tidak ada deskripsi lokasi'}</div>
-                        <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                          <MapPin className="h-3 w-3" />
-                          {report.lat}, {report.lng}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-slate-900">
-                          {new Date(report.createdAt || report.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                        </div>
-                        <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                          <Clock className="h-3 w-3" />
-                          {new Date(report.createdAt || report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {editingId === report.id ? (
-                          <select 
-                            className="text-sm border border-slate-300 rounded p-1 focus:ring-2 focus:ring-emerald-500 outline-none"
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-3 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 lg:hidden">Tanggal & Waktu</p>
+                      <p className="text-sm text-slate-900 flex items-center gap-1.5">
+                        <CalendarDays className="h-4 w-4 text-slate-400" />
+                        {new Date(report.createdAt || report.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                      <p className="text-sm text-slate-600 flex items-center gap-1.5">
+                        <Clock className="h-4 w-4 text-slate-400" />
+                        {new Date(report.createdAt || report.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+
+                    <div className="lg:col-span-3 flex flex-col lg:items-end justify-between gap-3">
+                      {editingId === report.id ? (
+                        <>
+                          <select
+                            className="w-full lg:w-auto text-sm border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 outline-none"
                             value={newStatus}
                             onChange={(e) => setNewStatus(e.target.value)}
                             autoFocus
@@ -204,60 +211,53 @@ export const AdminReports = () => {
                             <option value="completed">Selesai</option>
                             <option value="rejected">Ditolak</option>
                           </select>
-                        ) : (
-                          <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(report.status)}`}>
-                            {translateStatus(report.status)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {editingId === report.id ? (
-                          <div className="flex items-center justify-end gap-2">
-                            <button 
+
+                          <div className="flex items-center gap-2">
+                            <button
                               onClick={() => handleUpdateStatus(report.id)}
                               disabled={updating}
-                              className="text-emerald-600 hover:text-emerald-900 p-1 bg-emerald-50 rounded"
+                              className="text-emerald-700 hover:text-white bg-emerald-50 hover:bg-emerald-600 px-3 py-2 rounded-lg text-sm inline-flex items-center gap-1 transition-colors"
                             >
                               <Check className="h-4 w-4" />
+                              Simpan
                             </button>
-                            <button 
+                            <button
                               onClick={() => { setEditingId(null); setNewStatus(''); }}
                               disabled={updating}
-                              className="text-slate-600 hover:text-slate-900 p-1 bg-slate-100 rounded"
+                              className="text-slate-700 hover:text-white bg-slate-100 hover:bg-slate-500 px-3 py-2 rounded-lg text-sm inline-flex items-center gap-1 transition-colors"
                             >
                               <X className="h-4 w-4" />
+                              Batal
                             </button>
                           </div>
-                        ) : (
-                          <button 
+                        </>
+                      ) : (
+                        <>
+                          <span className={`px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(report.status)}`}>
+                            {translateStatus(report.status)}
+                          </span>
+                          <button
                             onClick={() => {
                               setEditingId(report.id);
-                              // normalisasikan status ke format english yang baru
-                              let s = report.status?.toLowerCase();
-                              if (s === 'menunggu verifikasi') s = 'pending';
-                              if (s === 'diproses') s = 'scheduled';
-                              if (s === 'selesai') s = 'completed';
-                              if (s === 'ditolak') s = 'rejected';
-                              setNewStatus(s || 'pending');
+                              setNewStatus(normalizeStatus(report.status));
                             }}
-                            className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1"
+                            className="text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-1 text-sm"
                           >
-                            <Edit2 className="h-3 w-3" /> Update
+                            <Edit2 className="h-3.5 w-3.5" />
+                            Update
                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                      Tidak ada laporan yang ditemukan.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-300 px-6 py-14 text-center text-slate-500">
+              Tidak ada laporan yang ditemukan.
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

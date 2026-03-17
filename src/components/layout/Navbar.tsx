@@ -46,7 +46,7 @@ export const Navbar = () => {
 
   const profilePath = currentUser?.role === 'warga' ? '/dashboard/profil' : 
                       currentUser?.role === 'komunitas' ? '/dashboard-komunitas/profil' : 
-                      '/dashboard/admin';
+                      '/dashboard/admin/profil';
 
   return (
     <>
