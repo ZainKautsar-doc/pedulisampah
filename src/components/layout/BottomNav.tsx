@@ -6,6 +6,7 @@ import {
   FileText,
   Trophy,
   User,
+  Gift,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -38,13 +39,29 @@ export const BottomNav = () => {
         ? "/dashboard/admin/profil"
         : "/dashboard/profil";
 
-  const authLinks = [
-    { name: "Beranda", path: homePath, icon: Home },
-    { name: "Laporan", path: reportPath, icon: FileText },
-    { name: "Peta", path: "/peta", icon: MapPin },
-    { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
-    { name: "Profil", path: profilePath, icon: User },
-  ];
+  const rewardPath =
+    user?.role === "admin"
+      ? "/dashboard/admin/rewards"
+      : user?.role === "warga"
+        ? "/dashboard/reward"
+        : null;
+
+  const authLinks =
+    user?.role === "admin" || user?.role === "warga"
+      ? [
+          { name: "Beranda", path: homePath, icon: Home },
+          { name: "Laporan", path: reportPath, icon: FileText },
+          { name: "Reward", path: rewardPath || "/dashboard/reward", icon: Gift },
+          { name: "Peta", path: "/peta", icon: MapPin },
+          { name: "Profil", path: profilePath, icon: User },
+        ]
+      : [
+          { name: "Beranda", path: homePath, icon: Home },
+          { name: "Laporan", path: reportPath, icon: FileText },
+          { name: "Peta", path: "/peta", icon: MapPin },
+          { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
+          { name: "Profil", path: profilePath, icon: User },
+        ];
 
   const links = user ? authLinks : guestLinks;
 
