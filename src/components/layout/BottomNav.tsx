@@ -1,55 +1,52 @@
 import { NavLink } from "react-router-dom";
-import { useAppContext } from "../../store/AppContext";
+import { useAuth } from "../../context/AuthContext";
 import {
   Home,
   MapPin,
   FileText,
   Trophy,
   User,
-  Gift,
-  History,
 } from "lucide-react";
 import { clsx } from "clsx";
 
 export const BottomNav = () => {
-  const { currentUser } = useAppContext();
+  const { user } = useAuth();
 
-  const publicLinks = [
+  const guestLinks = [
     { name: "Beranda", path: "/", icon: Home },
-    { name: "Laporan", path: "/login", icon: FileText },
-    { name: "Peta", path: "/peta", icon: MapPin },
-    { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
     { name: "Profil", path: "/login", icon: User },
   ];
 
-  const wargaLinks = [
-    { name: "Beranda", path: "/dashboard", icon: Home },
-    { name: "Laporan", path: "/dashboard/lapor", icon: FileText },
-    { name: "Reward", path: "/dashboard/reward", icon: Gift },
-    { name: "Peta", path: "/peta", icon: MapPin },
-    { name: "Profil", path: "/dashboard/profil", icon: User },
-  ];
+  const homePath =
+    user?.role === "komunitas"
+      ? "/dashboard-komunitas"
+      : user?.role === "admin"
+        ? "/dashboard/admin"
+        : "/dashboard";
 
-  const komunitasLinks = [
-    { name: "Beranda", path: "/dashboard-komunitas", icon: Home },
-    { name: "Laporan", path: "/dashboard-komunitas/laporan", icon: FileText },
+  const reportPath =
+    user?.role === "komunitas"
+      ? "/dashboard-komunitas/laporan"
+      : user?.role === "admin"
+        ? "/dashboard/admin/reports"
+        : "/dashboard/lapor";
+
+  const profilePath =
+    user?.role === "komunitas"
+      ? "/dashboard-komunitas/profil"
+      : user?.role === "admin"
+        ? "/dashboard/admin"
+        : "/dashboard/profil";
+
+  const authLinks = [
+    { name: "Beranda", path: homePath, icon: Home },
+    { name: "Laporan", path: reportPath, icon: FileText },
     { name: "Peta", path: "/peta", icon: MapPin },
     { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
-    { name: "Profil", path: "/dashboard-komunitas/profil", icon: User },
+    { name: "Profil", path: profilePath, icon: User },
   ];
 
-  const adminLinks = [
-    { name: "Beranda", path: "/dashboard/admin", icon: Home },
-    { name: "Laporan", path: "/dashboard/admin/reports", icon: FileText },
-    { name: "Reward", path: "/dashboard/admin/rewards", icon: Gift },
-    { name: "Redeem", path: "/dashboard/admin/redeems", icon: History },
-    { name: "Profil", path: "/dashboard/admin", icon: User },
-  ];
-
-  let links = publicLinks;
-  if (currentUser?.role === "warga") links = wargaLinks;
-  if (currentUser?.role === "komunitas") links = komunitasLinks;
-  if (currentUser?.role === "admin") links = adminLinks;
+  const links = user ? authLinks : guestLinks;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden bg-white border-t border-slate-200 shadow-[0_-6px_18px_rgba(15,23,42,0.08)]">

@@ -41,8 +41,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/peta" element={<MapPage />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/peta" element={<ProtectedRoute><MapPage /></ProtectedRoute>} />
+          <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
           <Route path="/tentang" element={<About />} />
 
           {/* Dashboard Warga */}
