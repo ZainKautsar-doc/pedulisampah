@@ -22,6 +22,17 @@ import {
 import { GoogleGenAI } from "@google/genai";
 import { motion } from "framer-motion";
 
+type ReportCategory = Exclude<WasteCategory, "belum terdeteksi">;
+
+const CATEGORY_OPTIONS: Array<{ value: ReportCategory; label: string }> = [
+  { value: "organik", label: "Organik" },
+  { value: "anorganik", label: "Anorganik" },
+  { value: "B3", label: "B3" },
+];
+
+const isValidCategory = (value: string): value is ReportCategory =>
+  CATEGORY_OPTIONS.some((option) => option.value === value);
+
 // Fix Leaflet icon issue
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -66,6 +77,10 @@ export const LaporSampah = () => {
   const [position, setPosition] = useState<L.LatLng | null>(null);
   const [photoUrl, setPhotoUrl] = useState("");
   const [category, setCategory] = useState<WasteCategory>("belum terdeteksi");
+  const [categorySource, setCategorySource] = useState<"empty" | "ai" | "manual">(
+    "empty",
+  );
+  const [categoryError, setCategoryError] = useState("");
   const [tip, setTip] = useState("");
 
   const [isDetecting, setIsDetecting] = useState(false);
@@ -134,8 +149,25 @@ export const LaporSampah = () => {
       reader.onloadend = () => {
         setPhotoUrl(reader.result as string);
         setCategory("belum terdeteksi"); // Reset category on new photo
+        setCategorySource("empty");
+        setCategoryError("");
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCategory = e.target.value;
+    if (!selectedCategory) {
+      setCategory("belum terdeteksi");
+      setCategorySource("empty");
+      return;
+    }
+
+    if (isValidCategory(selectedCategory)) {
+      setCategory(selectedCategory);
+      setCategorySource("manual");
+      setCategoryError("");
     }
   };
 
@@ -173,15 +205,21 @@ export const LaporSampah = () => {
 
       const resultText = response.text?.trim().toLowerCase() || "";
 
+      let detectedCategory: ReportCategory;
       if (resultText.includes("organik") && !resultText.includes("anorganik")) {
-        setCategory("organik");
+        detectedCategory = "organik";
       } else if (resultText.includes("b3")) {
-        setCategory("B3");
+        detectedCategory = "B3";
       } else {
-        setCategory("anorganik");
+        detectedCategory = "anorganik";
       }
+      setCategory(detectedCategory);
+      setCategorySource("ai");
+      setCategoryError("");
     } catch (error) {
       console.error("AI Detection failed:", error);
+      setCategory("belum terdeteksi");
+      setCategorySource("empty");
       alert(
         "Gagal mendeteksi jenis sampah. Silakan pilih kategori secara manual.",
       );
@@ -198,6 +236,11 @@ export const LaporSampah = () => {
       );
       return;
     }
+    if (!isValidCategory(category)) {
+      setCategoryError("Jenis sampah wajib diisi.");
+      alert("Jenis sampah wajib diisi, pilih manual atau gunakan deteksi AI.");
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -209,7 +252,7 @@ export const LaporSampah = () => {
         photoUrl,
         lat: position.lat,
         lng: position.lng,
-        category: category === "belum terdeteksi" ? "anorganik" : category,
+        category,
         userTip: tip || undefined,
       });
 
@@ -301,6 +344,8 @@ export const LaporSampah = () => {
                         onClick={() => {
                           setPhotoUrl("");
                           setCategory("belum terdeteksi");
+                          setCategorySource("empty");
+                          setCategoryError("");
                         }}
                         className="absolute -top-3 -right-3 bg-red-100 text-red-600 rounded-full p-1.5 hover:bg-red-200 shadow-sm transition-colors"
                       >
@@ -372,6 +417,16 @@ export const LaporSampah = () => {
                           "Gunakan AI untuk mendeteksi otomatis"
                         )}
                       </p>
+                      {categorySource === "ai" && (
+                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-700 border border-emerald-200 mt-1">
+                          Hasil deteksi AI
+                        </span>
+                      )}
+                      {categorySource === "manual" && (
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-700 border border-slate-200 mt-1">
+                          Diubah manual
+                        </span>
+                      )}
                     </div>
                   </div>
                   <button
@@ -391,6 +446,39 @@ export const LaporSampah = () => {
                   </button>
                 </motion.div>
               )}
+
+              <div className="mt-4">
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-bold text-slate-900"
+                >
+                  Jenis Sampah <span className="text-red-500">*</span>
+                </label>
+                <p className="text-xs text-slate-500 mt-1">
+                  Terisi otomatis setelah deteksi AI, tapi kamu bisa ubah manual
+                  kapan saja.
+                </p>
+                <select
+                  id="category"
+                  name="category"
+                  value={category === "belum terdeteksi" ? "" : category}
+                  onChange={handleCategoryChange}
+                  required
+                  className="mt-2 block w-full shadow-sm sm:text-sm border-slate-200 rounded-xl px-4 py-3 border bg-white/80 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                >
+                  <option value="">Pilih jenis sampah</option>
+                  {CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                {categoryError && (
+                  <p className="mt-2 text-xs font-medium text-red-600">
+                    {categoryError}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Judul & Deskripsi */}
