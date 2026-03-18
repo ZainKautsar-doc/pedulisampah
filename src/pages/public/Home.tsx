@@ -187,7 +187,7 @@ export const Home = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/dashboard/lapor" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
+                  <Link to="/dashboard/warga/lapor" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
                     <ChevronRight className="h-4 w-4" /> Laporan
                   </Link>
                 </li>
@@ -202,7 +202,7 @@ export const Home = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/dashboard/profil" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
+                  <Link to="/dashboard/warga/profil" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
                     <ChevronRight className="h-4 w-4" /> Profil
                   </Link>
                 </li>

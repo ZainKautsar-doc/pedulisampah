@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AppProvider } from './store/AppContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';// Public Pages
@@ -34,6 +34,23 @@ import { AdminRedeems } from './pages/admin/AdminRedeems';
 import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminProfile } from './pages/admin/AdminProfile';
 
+const NotFoundPage = () => {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="text-center max-w-md">
+        <h1 className="text-3xl font-bold text-slate-900">404</h1>
+        <p className="text-slate-600 mt-2">Halaman tidak ditemukan.</p>
+        <Link
+          to="/"
+          className="inline-flex items-center justify-center mt-6 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
+        >
+          Kembali ke Beranda
+        </Link>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <AuthProvider>
@@ -49,11 +66,16 @@ export default function App() {
           <Route path="/tentang" element={<About />} />
 
           {/* Dashboard Warga */}
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardWarga /></ProtectedRoute>} />
-          <Route path="/dashboard/lapor" element={<ProtectedRoute><LaporSampah /></ProtectedRoute>} />
-          <Route path="/dashboard/riwayat" element={<ProtectedRoute><RiwayatLaporan /></ProtectedRoute>} />
-          <Route path="/dashboard/reward" element={<ProtectedRoute><RewardRedeem /></ProtectedRoute>} />
-          <Route path="/dashboard/profil" element={<ProtectedRoute><ProfilWarga /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<Navigate to="/dashboard/warga" replace />} />
+          <Route path="/dashboard/warga" element={<ProtectedRoute><DashboardWarga /></ProtectedRoute>} />
+          <Route path="/dashboard/warga/lapor" element={<ProtectedRoute><LaporSampah /></ProtectedRoute>} />
+          <Route path="/dashboard/warga/riwayat" element={<ProtectedRoute><RiwayatLaporan /></ProtectedRoute>} />
+          <Route path="/dashboard/warga/reward" element={<ProtectedRoute><RewardRedeem /></ProtectedRoute>} />
+          <Route path="/dashboard/warga/profil" element={<ProtectedRoute><ProfilWarga /></ProtectedRoute>} />
+          <Route path="/dashboard/lapor" element={<Navigate to="/dashboard/warga/lapor" replace />} />
+          <Route path="/dashboard/riwayat" element={<Navigate to="/dashboard/warga/riwayat" replace />} />
+          <Route path="/dashboard/reward" element={<Navigate to="/dashboard/warga/reward" replace />} />
+          <Route path="/dashboard/profil" element={<Navigate to="/dashboard/warga/profil" replace />} />
           <Route path="/profil" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
           {/* Dashboard Komunitas */}
@@ -71,6 +93,9 @@ export default function App() {
           <Route path="/dashboard/admin/redeems" element={<ProtectedRoute><AdminRedeems /></ProtectedRoute>} />
           <Route path="/dashboard/admin/users" element={<ProtectedRoute><AdminUsers /></ProtectedRoute>} />
           <Route path="/dashboard/admin/profil" element={<ProtectedRoute><AdminProfile /></ProtectedRoute>} />
+
+          {/* Fallback */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
     </AppProvider>

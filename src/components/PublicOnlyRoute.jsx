@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const getRedirectPath = (role) => {
   if (role === 'admin') return '/dashboard/admin';
   if (role === 'komunitas' || role === 'petugas') return '/dashboard-komunitas';
-  return '/dashboard';
+  return '/dashboard/warga';
 };
 
 export const PublicOnlyRoute = ({ children }) => {

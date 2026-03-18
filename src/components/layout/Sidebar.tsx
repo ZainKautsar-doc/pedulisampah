@@ -20,11 +20,11 @@ export const Sidebar = () => {
   if (!currentUser) return null;
 
   const wargaLinks = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Laporkan Sampah', path: '/dashboard/lapor', icon: MapPin },
-    { name: 'Riwayat Laporan', path: '/dashboard/riwayat', icon: History },
-    { name: 'Reward & Redeem', path: '/dashboard/reward', icon: Gift },
-    { name: 'Profil', path: '/dashboard/profil', icon: User },
+    { name: 'Dashboard', path: '/dashboard/warga', icon: LayoutDashboard },
+    { name: 'Laporkan Sampah', path: '/dashboard/warga/lapor', icon: MapPin },
+    { name: 'Riwayat Laporan', path: '/dashboard/warga/riwayat', icon: History },
+    { name: 'Reward & Redeem', path: '/dashboard/warga/reward', icon: Gift },
+    { name: 'Profil', path: '/dashboard/warga/profil', icon: User },
   ];
 
   const komunitasLinks = [
@@ -58,7 +58,7 @@ export const Sidebar = () => {
               <NavLink
                 key={link.name}
                 to={link.path}
-                end={link.path === '/dashboard' || link.path === '/dashboard-komunitas' || link.path === '/dashboard/admin'}
+                end={link.path === '/dashboard/warga' || link.path === '/dashboard-komunitas' || link.path === '/dashboard/admin'}
                 className={({ isActive }) =>
                   clsx(
                     'flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 relative overflow-hidden group',

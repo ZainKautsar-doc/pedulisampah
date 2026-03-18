@@ -17,7 +17,10 @@ export const ProtectedRoute = ({ children }) => {
 
   // Cek apakah user mencoba mengakses route admin tapi bukan admin
   if (location.pathname.startsWith('/dashboard/admin') && user.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
+    if (user.role === 'komunitas' || user.role === 'petugas') {
+      return <Navigate to="/dashboard-komunitas" replace />;
+    }
+    return <Navigate to="/dashboard/warga" replace />;
   }
 
   // Jika user sudah login dan role sesuai, render halaman

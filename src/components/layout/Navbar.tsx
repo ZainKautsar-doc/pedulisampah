@@ -44,7 +44,7 @@ export const Navbar = () => {
     { name: 'Tentang', path: '/tentang' },
   ];
 
-  const profilePath = currentUser?.role === 'warga' ? '/dashboard/profil' : 
+  const profilePath = currentUser?.role === 'warga' ? '/dashboard/warga/profil' : 
                       currentUser?.role === 'komunitas' ? '/dashboard-komunitas/profil' : 
                       '/dashboard/admin/profil';
 

@@ -1,17 +1,67 @@
 import { DashboardLayout } from "../../../components/layout/DashboardLayout";
 import { useAppContext } from "../../../store/AppContext";
-import { format } from "date-fns";
+import type { Report } from "../../../store/AppContext";
+import { format, isValid } from "date-fns";
 import { id } from "date-fns/locale";
 import { MapPin, Info, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { AddressDisplay } from "@/src/components/AddressDisplay";
+import { useEffect, useMemo, useState } from "react";
+
+const isValidReport = (report: unknown): report is Report => {
+  if (!report || typeof report !== "object") return false;
+  const item = report as Partial<Report>;
+  return (
+    typeof item.id === "string" &&
+    typeof item.userId === "string" &&
+    typeof item.title === "string" &&
+    typeof item.description === "string" &&
+    typeof item.photoUrl === "string" &&
+    typeof item.createdAt === "string" &&
+    typeof item.status === "string" &&
+    typeof item.category === "string" &&
+    typeof item.lat === "number" &&
+    typeof item.lng === "number"
+  );
+};
+
+const formatReportDate = (rawDate: string) => {
+  const parsedDate = new Date(rawDate);
+  if (!isValid(parsedDate)) return "Tanggal tidak valid";
+  return format(parsedDate, "dd MMM yyyy", { locale: id });
+};
 
 export const RiwayatLaporan = () => {
   const { currentUser, reports } = useAppContext();
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  if (!currentUser) return null;
+  const safeReports = useMemo(() => {
+    if (!currentUser || !Array.isArray(reports)) return [];
+    return reports
+      .filter(isValidReport)
+      .filter((report) => report.userId === currentUser.id)
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+  }, [currentUser, reports]);
 
-  const myReports = reports.filter((r) => r.userId === currentUser.id);
+  useEffect(() => {
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      if (!Array.isArray(reports)) {
+        throw new Error("Format data laporan tidak valid.");
+      }
+    } catch (error) {
+      console.error("RiwayatLaporan error:", error);
+      setErrorMessage("Gagal memuat data riwayat laporan.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [reports, currentUser]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -88,8 +138,26 @@ export const RiwayatLaporan = () => {
               animate="visible"
               className="bg-white/40 divide-y divide-slate-200/60"
             >
-              {myReports.length > 0 ? (
-                myReports.map((report) => (
+              {isLoading ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-12 text-center text-slate-500"
+                  >
+                    Memuat riwayat laporan...
+                  </td>
+                </tr>
+              ) : errorMessage ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-12 text-center text-red-600 font-medium"
+                  >
+                    {errorMessage}
+                  </td>
+                </tr>
+              ) : safeReports.length > 0 ? (
+                safeReports.map((report) => (
                   <motion.tr
                     variants={itemVariants}
                     key={report.id}
@@ -133,11 +201,16 @@ export const RiwayatLaporan = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-slate-500">
                         <MapPin className="h-4 w-4 mr-1 text-slate-400 flex-shrink-0" />
-                        <AddressDisplay
-                          lat={report.lat}
-                          lng={report.lng}
-                          className="truncate max-w-[150px] sm:max-w-[250px]"
-                        />
+                        {Number.isFinite(report.lat) &&
+                        Number.isFinite(report.lng) ? (
+                          <AddressDisplay
+                            lat={report.lat}
+                            lng={report.lng}
+                            className="truncate max-w-[150px] sm:max-w-[250px]"
+                          />
+                        ) : (
+                          <span>-</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -156,9 +229,7 @@ export const RiwayatLaporan = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">
-                      {format(new Date(report.createdAt), "dd MMM yyyy", {
-                        locale: id,
-                      })}
+                      {formatReportDate(report.createdAt)}
                     </td>
                   </motion.tr>
                 ))

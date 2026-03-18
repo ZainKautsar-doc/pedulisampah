@@ -19,27 +19,27 @@ export const BottomNav = () => {
       ? "/dashboard-komunitas"
       : user?.role === "admin"
         ? "/dashboard/admin"
-        : "/dashboard";
+        : "/dashboard/warga";
 
   const reportPath =
     user?.role === "komunitas"
       ? "/dashboard-komunitas/laporan"
       : user?.role === "admin"
         ? "/dashboard/admin/reports"
-        : "/dashboard/lapor";
+        : "/dashboard/warga/lapor";
 
   const profilePath =
     user?.role === "komunitas"
       ? "/dashboard-komunitas/profil"
       : user?.role === "admin"
         ? "/dashboard/admin/profil"
-        : "/dashboard/profil";
+        : "/dashboard/warga/profil";
 
   const rewardPath =
     user?.role === "admin"
       ? "/dashboard/admin/rewards"
       : user?.role === "warga"
-        ? "/dashboard/reward"
+        ? "/dashboard/warga/reward"
         : null;
 
   const authLinks =
@@ -47,7 +47,11 @@ export const BottomNav = () => {
       ? [
           { name: "Beranda", path: homePath, icon: Home },
           { name: "Laporan", path: reportPath, icon: FileText },
-          { name: "Reward", path: rewardPath || "/dashboard/reward", icon: Gift },
+          {
+            name: "Reward",
+            path: rewardPath || "/dashboard/warga/reward",
+            icon: Gift,
+          },
           { name: "Peta", path: "/peta", icon: MapPin },
           { name: "Profil", path: profilePath, icon: User },
         ]
@@ -71,7 +75,7 @@ export const BottomNav = () => {
             to={link.path}
             end={
               link.path === "/" ||
-              link.path === "/dashboard" ||
+              link.path === "/dashboard/warga" ||
               link.path === "/dashboard-komunitas" ||
               link.path === "/dashboard/admin"
             }
