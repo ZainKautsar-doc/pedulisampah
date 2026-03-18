@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { PublicLayout } from '../../components/layout/PublicLayout';
 import { useAppContext } from '../../store/AppContext';
-import { MapPin, CheckCircle, Users, Camera, Truck, Gift, Star, ArrowRight } from 'lucide-react';
+import { MapPin, CheckCircle, Users, Camera, Truck, Gift, Star, ArrowRight, Leaf, Mail, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const Home = () => {
@@ -158,6 +158,96 @@ export const Home = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="relative z-10 bg-slate-900 text-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-emerald-500 to-teal-500 p-2.5 rounded-xl shadow-lg">
+                  <Leaf className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white">PeduliSampah</h3>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-slate-300">
+                Platform kolaboratif untuk pelaporan sampah, pemantauan penanganan, dan pengelolaan reward berbasis partisipasi warga.
+              </p>
+              <p className="mt-3 text-sm text-emerald-300 font-medium">
+                Bareng-bareng jaga lingkungan kita.
+              </p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Navigasi Cepat</h4>
+              <ul className="mt-4 space-y-2.5 text-sm">
+                <li>
+                  <Link to="/" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
+                    <ChevronRight className="h-4 w-4" /> Beranda
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/dashboard/lapor" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
+                    <ChevronRight className="h-4 w-4" /> Laporan
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/peta" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
+                    <ChevronRight className="h-4 w-4" /> Peta
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/leaderboard" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
+                    <ChevronRight className="h-4 w-4" /> Leaderboard
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/dashboard/profil" className="inline-flex items-center gap-2 text-slate-300 hover:text-emerald-300 transition-colors">
+                    <ChevronRight className="h-4 w-4" /> Profil
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Informasi Platform</h4>
+              <ul className="mt-4 space-y-2.5 text-sm text-slate-300">
+                <li className="inline-flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                  Pelaporan cepat berbasis lokasi
+                </li>
+                <li className="inline-flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                  Monitoring status penanganan
+                </li>
+                <li className="inline-flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-emerald-400" />
+                  Sistem poin dan reward warga
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-400">Kontak</h4>
+              <p className="mt-4 text-sm text-slate-300 leading-relaxed">
+                Punya pertanyaan atau masukan? Hubungi tim kami.
+              </p>
+              <a
+                href="mailto:halo@pedulisampah.id"
+                className="mt-3 inline-flex items-center gap-2 text-sm text-slate-200 hover:text-emerald-300 transition-colors"
+              >
+                <Mail className="h-4 w-4" />
+                halo@pedulisampah.id
+              </a>
+            </div>
+          </div>
+
+          <div className="mt-10 border-t border-slate-800 pt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs text-slate-400">© 2026 PeduliSampah. Semua hak dilindungi.</p>
+            <p className="text-xs text-slate-500">Dibuat untuk mendorong lingkungan yang lebih bersih dan berkelanjutan.</p>
+          </div>
+        </div>
+      </footer>
     </PublicLayout>
   );
 };

@@ -2,10 +2,13 @@ import { ReactNode } from 'react';
 import { Navbar } from './Navbar';
 import { BottomNav } from './BottomNav';
 import { motion } from 'framer-motion';
+import { useAuth } from '../../context/AuthContext';
 
 export const PublicLayout = ({ children }: { children: ReactNode }) => {
+  const { user } = useAuth();
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col pb-16 md:pb-0 relative overflow-hidden">
+    <div className={`min-h-screen bg-slate-50 flex flex-col ${user ? 'pb-16 md:pb-0' : 'pb-0'} relative overflow-hidden`}>
       {/* Decorative background elements */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-400/5 rounded-full blur-3xl" />

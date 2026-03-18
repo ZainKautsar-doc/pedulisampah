@@ -12,11 +12,7 @@ import { clsx } from "clsx";
 
 export const BottomNav = () => {
   const { user } = useAuth();
-
-  const guestLinks = [
-    { name: "Beranda", path: "/", icon: Home },
-    { name: "Profil", path: "/login", icon: User },
-  ];
+  if (!user) return null;
 
   const homePath =
     user?.role === "komunitas"
@@ -63,7 +59,7 @@ export const BottomNav = () => {
           { name: "Profil", path: profilePath, icon: User },
         ];
 
-  const links = user ? authLinks : guestLinks;
+  const links = authLinks;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex md:hidden bg-white border-t border-slate-200 shadow-[0_-6px_18px_rgba(15,23,42,0.08)]">
