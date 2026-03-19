@@ -15,8 +15,7 @@ export const AdminRewards = () => {
     name: '',
     description: '',
     points_required: 0,
-    stock: 0,
-    image_url: ''
+    icon: ''
   });
   const [saving, setSaving] = useState(false);
 
@@ -62,22 +61,16 @@ export const AdminRewards = () => {
     setSaving(true);
     try {
       const pointsRequired = Number(formData.points_required);
-      const stock = Number(formData.stock);
 
       if (!Number.isFinite(pointsRequired) || pointsRequired < 0) {
         throw new Error('Poin yang dibutuhkan harus berupa angka 0 atau lebih.');
-      }
-
-      if (!Number.isFinite(stock) || stock < 0) {
-        throw new Error('Stok harus berupa angka 0 atau lebih.');
       }
 
       const payload = {
         name: formData.name.trim(),
         description: formData.description.trim(),
         points_required: Math.floor(pointsRequired),
-        stock: Math.floor(stock),
-        image_url: formData.image_url.trim() ? formData.image_url.trim() : null
+        icon: formData.icon.trim() ? formData.icon.trim() : null
       };
 
       if (editingId) {
@@ -135,15 +128,14 @@ export const AdminRewards = () => {
       name: reward.name || '',
       description: reward.description || '',
       points_required: reward.points_required || 0,
-      stock: reward.stock || 0,
-      image_url: reward.image_url || ''
+      icon: reward.icon || ''
     });
     setEditingId(reward.id);
     setShowForm(true);
   };
 
   const resetForm = () => {
-    setFormData({ name: '', description: '', points_required: 0, stock: 0, image_url: '' });
+    setFormData({ name: '', description: '', points_required: 0, icon: '' });
     setEditingId(null);
     setShowForm(false);
   };
@@ -212,8 +204,8 @@ export const AdminRewards = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-1">URL Gambar</label>
                 <input 
                   type="url" 
-                  value={formData.image_url}
-                  onChange={e => setFormData({...formData, image_url: e.target.value})}
+                  value={formData.icon}
+                  onChange={e => setFormData({...formData, icon: e.target.value})}
                   placeholder="https://example.com/image.png"
                   className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
@@ -239,18 +231,6 @@ export const AdminRewards = () => {
                   className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Stok Bawaan</label>
-                <input 
-                  type="number" 
-                  required
-                  min="0"
-                  value={formData.stock}
-                  onChange={e => setFormData({...formData, stock: e.target.value === '' ? 0 : Number(e.target.value)})}
-                  className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-
               <div className="md:col-span-2 flex justify-end gap-3 mt-2">
                 <button 
                   type="button" 
@@ -280,7 +260,7 @@ export const AdminRewards = () => {
               <div key={reward.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col group">
                 <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
                   <img 
-                    src={reward.image_url || 'https://picsum.photos/400/300?grayscale'} 
+                    src={reward.icon || 'https://picsum.photos/400/300?grayscale'} 
                     alt={reward.name}
                     className="w-full h-full object-cover"
                   />
@@ -292,9 +272,6 @@ export const AdminRewards = () => {
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-slate-900">{reward.name}</h3>
-                    <span className="text-xs font-medium px-2 py-1 bg-slate-100 rounded text-slate-600 whitespace-nowrap ml-2">
-                      Stok: {reward.stock}
-                    </span>
                   </div>
                   <p className="text-sm text-slate-600 flex-1 line-clamp-2">
                     {reward.description}

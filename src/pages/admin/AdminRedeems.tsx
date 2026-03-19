@@ -20,7 +20,7 @@ export const AdminRedeems = () => {
         .from('redeems')
         .select(`
           *,
-          users(name, email),
+          users(name),
           rewards(name, description, points_required, icon)
         `)
         .order('created_at', { ascending: false });

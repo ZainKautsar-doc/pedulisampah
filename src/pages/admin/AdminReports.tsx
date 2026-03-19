@@ -11,7 +11,7 @@ export const AdminReports = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   // Status editing state
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState('');
   const [updating, setUpdating] = useState(false);
 
@@ -31,8 +31,6 @@ export const AdminReports = () => {
         console.error(error);
         return;
       }
-
-      console.log(data);
       
       if (data) setReports(data);
     } catch (error) {
@@ -42,11 +40,15 @@ export const AdminReports = () => {
     }
   };
 
-  const handleUpdateStatus = async (reportId: number) => {
+  const handleUpdateStatus = async (reportId: string) => {
     if (!newStatus) return setEditingId(null);
     setUpdating(true);
 
     try {
+      const currentReport = reports.find((r) => r.id === reportId);
+      if (!currentReport) throw new Error('Laporan tidak ditemukan.');
+      if (!user?.id) throw new Error('User admin tidak valid.');
+
       // 1. Update the report status
       const { error: updateError } = await supabase
         .from('reports')
@@ -56,13 +58,18 @@ export const AdminReports = () => {
       if (updateError) throw updateError;
 
       // 2. Insert into report_updates for activity tracking
-      if (user) {
-        await supabase.from('report_updates').insert({
+      const { error: updateLogError } = await supabase
+        .from('report_updates')
+        .insert({
           report_id: reportId,
-          user_id: user.id,
-          status: newStatus,
-          notes: 'Diubah melalui panel admin'
+          updated_by: user.id,
+          old_status: currentReport.status || null,
+          new_status: newStatus,
+          note: 'Diubah melalui panel admin',
         });
+
+      if (updateLogError) {
+        console.error(updateLogError);
       }
 
       // 3. Update local state

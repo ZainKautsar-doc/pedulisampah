@@ -73,7 +73,7 @@ export const ProfilePage = ({ requiredRole }: ProfilePageProps) => {
 
       if (user.role === 'komunitas') {
         const [{ count: updateCount }, { count: scheduledCount }, { count: completedCount }] = await Promise.all([
-          supabase.from('report_updates').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+          supabase.from('report_updates').select('*', { count: 'exact', head: true }).eq('updated_by', user.id),
           supabase.from('reports').select('*', { count: 'exact', head: true }).in('status', ['scheduled', 'Diproses']),
           supabase.from('reports').select('*', { count: 'exact', head: true }).in('status', ['completed', 'Selesai'])
         ]);
@@ -113,9 +113,6 @@ export const ProfilePage = ({ requiredRole }: ProfilePageProps) => {
       const updates: Record<string, unknown> = { name: displayName };
       if ('avatar_url' in user) {
         updates.avatar_url = avatarUrl || null;
-      }
-      if ('avatar' in user) {
-        updates.avatar = avatarUrl || null;
       }
 
       const { error } = await supabase.from('users').update(updates).eq('id', user.id);

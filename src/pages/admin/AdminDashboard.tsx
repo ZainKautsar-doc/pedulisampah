@@ -57,8 +57,6 @@ export const AdminDashboard = () => {
         return;
       }
 
-      console.log(allReports);
-
       const { data: allUsers, error: usersError } = await supabase.from('users').select('*');
       if (usersError) {
         console.error(usersError);
@@ -147,8 +145,8 @@ export const AdminDashboard = () => {
       } else {
         // Fallback dummy activities if table is empty or error
         setRecentActivities([
-          { id: 1, users: { name: 'Admin System' }, status: 'verified', created_at: new Date().toISOString() },
-          { id: 2, users: { name: 'Admin System' }, status: 'completed', created_at: new Date(Date.now() - 86400000).toISOString() }
+          { id: 1, users: { name: 'Admin System' }, new_status: 'verified', created_at: new Date().toISOString() },
+          { id: 2, users: { name: 'Admin System' }, new_status: 'completed', created_at: new Date(Date.now() - 86400000).toISOString() }
         ]);
       }
 
@@ -374,13 +372,13 @@ export const AdminDashboard = () => {
                       )}
                       <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center shrink-0 border-2 border-white z-10">
                         <div className={`h-2.5 w-2.5 rounded-full ${
-                          activity.status === 'completed' || activity.status === 'verified' ? 'bg-emerald-500' :
-                          activity.status === 'rejected' ? 'bg-red-500' : 'bg-blue-500'
+                          activity.new_status === 'completed' || activity.new_status === 'verified' ? 'bg-emerald-500' :
+                          activity.new_status === 'rejected' ? 'bg-red-500' : 'bg-blue-500'
                         }`} />
                       </div>
                       <div className="pb-4">
                         <p className="text-sm text-slate-900">
-                          <span className="font-semibold">{activity.users?.name || 'User'}</span> mengubah status laporan menjadi <span className="font-semibold text-emerald-600">{translateStatus(activity.status)}</span>
+                          <span className="font-semibold">{activity.users?.name || 'User'}</span> mengubah status laporan menjadi <span className="font-semibold text-emerald-600">{translateStatus(activity.new_status || 'pending')}</span>
                         </p>
                         <p className="text-xs text-slate-500 mt-1">
                           {new Date(activity.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}

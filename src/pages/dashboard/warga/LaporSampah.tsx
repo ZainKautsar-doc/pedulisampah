@@ -252,6 +252,12 @@ export const LaporSampah = () => {
       if (!user?.id) {
         throw new Error("User tidak ditemukan. Silakan login ulang.");
       }
+      const parsedTipAmount = tip.trim()
+        ? Number(tip.replace(/[^\d]/g, ""))
+        : null;
+      const tipAmount = Number.isFinite(parsedTipAmount)
+        ? parsedTipAmount
+        : null;
 
       const { data: report, error: reportError } = await supabase
         .from("reports")
@@ -264,6 +270,7 @@ export const LaporSampah = () => {
           latitude: position.lat,
           longitude: position.lng,
           location_name: addressName || null,
+          tip_amount: tipAmount,
           status: "pending",
         })
         .select("id")

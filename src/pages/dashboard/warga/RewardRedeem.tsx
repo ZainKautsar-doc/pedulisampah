@@ -10,9 +10,7 @@ type RewardItem = {
   name: string;
   description: string | null;
   points_required: number;
-  stock: number;
-  image_url: string | null;
-  icon?: string | null;
+  icon: string | null;
 };
 
 type RedeemHistoryItem = {
@@ -46,7 +44,7 @@ export const RewardRedeem = () => {
   const fetchRewards = async () => {
     const { data, error } = await supabase
       .from('rewards')
-      .select('*')
+      .select('id, name, description, points_required, icon')
       .order('points_required', { ascending: true });
 
     if (error) {
@@ -145,34 +143,13 @@ export const RewardRedeem = () => {
 
       const { data: rewardRow, error: rewardError } = await supabase
         .from('rewards')
-        .select('id, name, points_required, stock')
+        .select('id, name, points_required')
         .eq('id', selectedRewardId)
         .single();
       if (rewardError) throw rewardError;
 
       if ((userRow?.points ?? 0) < rewardRow.points_required) {
         setRedeemResult({ success: false, message: 'Poin kamu belum cukup untuk reward ini.' });
-        setConfirmModalOpen(false);
-        setModalOpen(true);
-        return;
-      }
-
-      if ((rewardRow?.stock ?? 0) <= 0) {
-        setRedeemResult({ success: false, message: 'Stok reward sudah habis.' });
-        setConfirmModalOpen(false);
-        setModalOpen(true);
-        return;
-      }
-
-      const { data: stockUpdated, error: stockError } = await supabase
-        .from('rewards')
-        .update({ stock: rewardRow.stock - 1 })
-        .eq('id', rewardRow.id)
-        .eq('stock', rewardRow.stock)
-        .select('stock')
-        .single();
-      if (stockError || !stockUpdated) {
-        setRedeemResult({ success: false, message: 'Stok reward tidak tersedia. Silakan coba lagi.' });
         setConfirmModalOpen(false);
         setModalOpen(true);
         return;
@@ -188,11 +165,6 @@ export const RewardRedeem = () => {
         .single();
 
       if (updatePointError || !userUpdated) {
-        await supabase
-          .from('rewards')
-          .update({ stock: rewardRow.stock })
-          .eq('id', rewardRow.id);
-
         setRedeemResult({ success: false, message: 'Poin berubah saat proses redeem. Silakan coba lagi.' });
         setConfirmModalOpen(false);
         setModalOpen(true);
@@ -202,7 +174,7 @@ export const RewardRedeem = () => {
       const voucherCode = generateVoucherCode();
       const nowIso = new Date().toISOString();
 
-      const { error: redeemInsertError } = await supabase
+      const { data: redeemRow, error: redeemInsertError } = await supabase
         .from('redeems')
         .insert([{
           user_id: currentUser.id,
@@ -210,11 +182,12 @@ export const RewardRedeem = () => {
           voucher_code: voucherCode,
           status: 'active',
           created_at: nowIso
-        }]);
+        }])
+        .select('id')
+        .single();
 
       if (redeemInsertError) {
         await supabase.from('users').update({ points: userRow.points }).eq('id', currentUser.id);
-        await supabase.from('rewards').update({ stock: rewardRow.stock }).eq('id', rewardRow.id);
         throw redeemInsertError;
       }
 
@@ -222,8 +195,9 @@ export const RewardRedeem = () => {
         .from('points_history')
         .insert([{
           user_id: currentUser.id,
-          points_change: -rewardRow.points_required,
-          description: `Redeem reward: ${rewardRow.name}`
+          points: -rewardRow.points_required,
+          type: 'redeem',
+          reference_id: redeemRow.id
         }]);
 
       if (historyError) {
@@ -312,8 +286,8 @@ export const RewardRedeem = () => {
             className="glass-card rounded-3xl overflow-hidden flex flex-col group"
           >
             <div className="h-40 bg-gradient-to-br from-emerald-50/80 to-teal-50/80 flex items-center justify-center border-b border-emerald-100/50 group-hover:from-emerald-100/80 group-hover:to-teal-100/80 transition-colors duration-300 overflow-hidden">
-              {reward.image_url ? (
-                <img src={reward.image_url} alt={reward.name} className="w-full h-full object-cover" />
+              {reward.icon ? (
+                <img src={reward.icon} alt={reward.name} className="w-full h-full object-cover" />
               ) : (
               <motion.div
                 whileHover={{ rotate: [0, -10, 10, -10, 0], transition: { duration: 0.5 } }}
@@ -325,7 +299,6 @@ export const RewardRedeem = () => {
             <div className="p-6 flex-1 flex flex-col bg-white/40">
               <h3 className="text-lg font-bold text-slate-900 mb-2">{reward.name}</h3>
               <p className="text-sm text-slate-500 mb-3 flex-1">{reward.description || '-'}</p>
-              <p className="text-xs text-slate-500 mb-4">Stok: <span className="font-semibold">{reward.stock}</span></p>
               
               <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100/60">
                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-yellow-100/80 text-yellow-800 border border-yellow-200/50 shadow-sm">
@@ -335,7 +308,7 @@ export const RewardRedeem = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => initiateRedeem(reward.id)}
-                  disabled={redeeming || userPoints < reward.points_required || reward.stock <= 0}
+                  disabled={redeeming || userPoints < reward.points_required}
                   className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-sm font-bold rounded-xl shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   Redeem Reward

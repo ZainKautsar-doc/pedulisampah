@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { CalendarClock, Plus, Search, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../context/AuthContext';
 
 export const AdminSchedules = () => {
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,8 +15,8 @@ export const AdminSchedules = () => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     report_id: '',
-    scheduled_date: '',
-    notes: ''
+    pickup_date: '',
+    note: ''
   });
   const [saving, setSaving] = useState(false);
 
@@ -26,22 +28,30 @@ export const AdminSchedules = () => {
     setLoading(true);
     try {
       // Fetch schedules with joined report info
-      const { data: scheduleData } = await supabase
+      const { data: scheduleData, error: scheduleError } = await supabase
         .from('pickup_schedules')
         .select(`
           *,
-          reports (title, location_name, address)
+          reports (title, location_name)
         `)
-        .order('scheduled_date', { ascending: true });
-        
+        .order('pickup_date', { ascending: true });
+
+      if (scheduleError) {
+        console.error(scheduleError);
+        return;
+      }
       if (scheduleData) setSchedules(scheduleData);
 
       // Fetch active reports (pending or scheduled) for the dropdown
-      const { data: reportData } = await supabase
+      const { data: reportData, error: reportError } = await supabase
         .from('reports')
-        .select('*')
-        .in('status', ['pending', 'Menunggu Verifikasi', 'verified', 'scheduled', 'Diproses']);
-      
+        .select('id, title, location_name, status')
+        .in('status', ['pending', 'verified', 'scheduled']);
+
+      if (reportError) {
+        console.error(reportError);
+        return;
+      }
       if (reportData) setReports(reportData);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -54,14 +64,20 @@ export const AdminSchedules = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const { data, error } = await supabase.from('pickup_schedules').insert([
-        {
-          report_id: parseInt(formData.report_id),
-          scheduled_date: new Date(formData.scheduled_date).toISOString(),
-          notes: formData.notes,
-          status: 'scheduled'
-        }
-      ]).select('*, reports(title, location_name, address)').single();
+      if (!user?.id) {
+        throw new Error('User admin tidak valid.');
+      }
+
+      const { data, error } = await supabase
+        .from('pickup_schedules')
+        .insert([{
+          report_id: formData.report_id,
+          scheduled_by: user.id,
+          pickup_date: formData.pickup_date,
+          note: formData.note.trim() || null,
+        }])
+        .select('*, reports(title, location_name)')
+        .single();
 
       if (error) throw error;
 
@@ -70,7 +86,7 @@ export const AdminSchedules = () => {
 
       setSchedules([...schedules, data]);
       setShowForm(false);
-      setFormData({ report_id: '', scheduled_date: '', notes: '' });
+      setFormData({ report_id: '', pickup_date: '', note: '' });
     } catch (error) {
       console.error('Error saving schedule:', error);
       alert('Gagal menyimpan jadwal pengangkutan.');
@@ -81,7 +97,7 @@ export const AdminSchedules = () => {
 
   const filteredSchedules = schedules.filter(s => 
     s.reports?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.notes?.toLowerCase().includes(searchTerm.toLowerCase())
+    s.note?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -139,10 +155,10 @@ export const AdminSchedules = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal & Waktu Pengangkutan</label>
                 <input 
-                  type="datetime-local" 
+                  type="date"
                   required
-                  value={formData.scheduled_date}
-                  onChange={e => setFormData({...formData, scheduled_date: e.target.value})}
+                  value={formData.pickup_date}
+                  onChange={e => setFormData({...formData, pickup_date: e.target.value})}
                   className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -152,8 +168,8 @@ export const AdminSchedules = () => {
                 <input 
                   type="text" 
                   placeholder="Misal: Truk besar dibutuhkan"
-                  value={formData.notes}
-                  onChange={e => setFormData({...formData, notes: e.target.value})}
+                  value={formData.note}
+                  onChange={e => setFormData({...formData, note: e.target.value})}
                   className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -210,7 +226,7 @@ export const AdminSchedules = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center text-sm font-medium text-slate-900 border border-slate-200 bg-slate-50 px-3 py-1.5 rounded-lg w-fit gap-2">
                           <CalendarClock className="h-4 w-4 text-emerald-600" />
-                          {new Date(schedule.scheduled_date).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                          {new Date(schedule.pickup_date).toLocaleDateString('id-ID', { dateStyle: 'medium' })}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -226,16 +242,12 @@ export const AdminSchedules = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-slate-600 bg-slate-50 px-3 py-2 rounded border border-slate-100 italic line-clamp-2">
-                          {schedule.notes || '-'}
+                          {schedule.note || '-'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${
-                          schedule.status === 'completed' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
-                          schedule.status === 'cancelled' ? 'bg-red-100 text-red-800 border-red-200' :
-                          'bg-indigo-100 text-indigo-800 border-indigo-200'
-                        }`}>
-                          {schedule.status}
+                        <span className="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border bg-indigo-100 text-indigo-800 border-indigo-200">
+                          terjadwal
                         </span>
                       </td>
                     </tr>
