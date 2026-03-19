@@ -2,12 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { supabase } from '../../lib/supabaseClient';
 import { Gift, Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export const AdminRewards = () => {
+  const { user } = useAuth();
   const [rewards, setRewards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [stats, setStats] = useState({ totalRewards: 0, totalRedeems: 0 });
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | number | null>(null);
@@ -23,6 +26,29 @@ export const AdminRewards = () => {
     fetchRewards();
     fetchStats();
   }, []);
+
+  const verifyAdminAccess = async () => {
+    if (!user?.id) {
+      throw new Error('Sesi login tidak valid. Silakan login ulang.');
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, role')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.error('[AdminRewards] Failed to verify role:', error.message, error);
+      throw new Error(`Gagal verifikasi role admin: ${error.message}`);
+    }
+
+    if (data?.role !== 'admin') {
+      throw new Error('Akses ditolak. Hanya admin yang dapat menambah atau mengubah reward.');
+    }
+
+    return data;
+  };
 
   const fetchRewards = async () => {
     setLoading(true);
@@ -58,20 +84,38 @@ export const AdminRewards = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
+
+    setFeedback(null);
     setSaving(true);
     try {
+      await verifyAdminAccess();
+
+      const name = formData.name.trim();
+      const description = formData.description.trim();
       const pointsRequired = Number(formData.points_required);
+      const icon = formData.icon.trim() || null;
+
+      if (!name) {
+        throw new Error('Nama reward wajib diisi.');
+      }
+
+      if (!description) {
+        throw new Error('Deskripsi reward wajib diisi.');
+      }
 
       if (!Number.isFinite(pointsRequired) || pointsRequired < 0) {
         throw new Error('Poin yang dibutuhkan harus berupa angka 0 atau lebih.');
       }
 
       const payload = {
-        name: formData.name.trim(),
-        description: formData.description.trim(),
+        name,
+        description,
         points_required: Math.floor(pointsRequired),
-        icon: formData.icon.trim() ? formData.icon.trim() : null
+        icon
       };
+
+      console.log('[AdminRewards] Saving reward payload:', payload);
 
       if (editingId) {
         // Update existing
@@ -82,8 +126,13 @@ export const AdminRewards = () => {
           .select()
           .single();
         
-        if (error) throw error;
+        if (error) {
+          console.error('[AdminRewards] Update reward failed:', error.message, error);
+          throw new Error(error.message);
+        }
+        console.log('[AdminRewards] Reward updated successfully:', data);
         setRewards(rewards.map(r => r.id === editingId ? data : r));
+        setFeedback({ type: 'success', text: 'Reward berhasil diperbarui.' });
       } else {
         // Insert new
         const { data, error } = await supabase
@@ -92,18 +141,23 @@ export const AdminRewards = () => {
           .select()
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error('[AdminRewards] Insert reward failed:', error.message, error);
+          throw new Error(error.message);
+        }
+        console.log('[AdminRewards] Reward inserted successfully:', data);
         setRewards([data, ...rewards]);
+        setFeedback({ type: 'success', text: 'Reward berhasil ditambahkan.' });
       }
       resetForm();
       fetchStats();
-    } catch (error) {
-      console.error('Error saving reward:', error);
-      const message = error instanceof Error ? error.message : 'Unknown error';
+    } catch (error: any) {
+      const message = error?.message || 'Terjadi kesalahan saat menyimpan reward.';
+      console.error('[AdminRewards] Error saving reward:', message, error);
       if (message.toLowerCase().includes('row-level security')) {
-        alert('Gagal menyimpan reward: akses ditolak oleh policy database (RLS). Pastikan akun admin punya izin INSERT/UPDATE tabel rewards.');
+        setFeedback({ type: 'error', text: `Akses ditolak oleh RLS: ${message}` });
       } else {
-        alert(`Gagal menyimpan reward. Detail: ${message}`);
+        setFeedback({ type: 'error', text: `Gagal menyimpan reward: ${message}` });
       }
     } finally {
       setSaving(false);
@@ -113,13 +167,20 @@ export const AdminRewards = () => {
   const handleDelete = async (id: string | number) => {
     if (!window.confirm('Apakah Anda yakin ingin menghapus reward ini?')) return;
     try {
+      await verifyAdminAccess();
       const { error } = await supabase.from('rewards').delete().eq('id', id);
-      if (error) throw error;
+      if (error) {
+        console.error('[AdminRewards] Delete reward failed:', error.message, error);
+        throw new Error(error.message);
+      }
+      console.log('[AdminRewards] Reward deleted successfully:', id);
       setRewards(rewards.filter(r => r.id !== id));
       fetchStats();
-    } catch (error) {
-      console.error('Error deleting reward:', error);
-      alert('Gagal menghapus reward. Mungkin masih ada histori penukaran.');
+      setFeedback({ type: 'success', text: 'Reward berhasil dihapus.' });
+    } catch (error: any) {
+      const message = error?.message || 'Gagal menghapus reward.';
+      console.error('[AdminRewards] Error deleting reward:', message, error);
+      setFeedback({ type: 'error', text: `Gagal menghapus reward: ${message}` });
     }
   };
 
@@ -185,6 +246,18 @@ export const AdminRewards = () => {
             <p className="text-2xl font-bold text-slate-900 mt-1">{stats.totalRedeems}</p>
           </div>
         </div>
+
+        {feedback && (
+          <div
+            className={`rounded-xl border px-4 py-3 text-sm font-medium ${
+              feedback.type === 'success'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-red-200 bg-red-50 text-red-700'
+            }`}
+          >
+            {feedback.text}
+          </div>
+        )}
 
         {showForm && (
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
