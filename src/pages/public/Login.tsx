@@ -13,20 +13,39 @@ export const Login = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const getLoginErrorMessage = (err: unknown) => {
+    const rawMessage =
+      err instanceof Error ? err.message.toLowerCase() : String(err || "");
+
+    if (
+      rawMessage.includes("email_not_confirmed") ||
+      rawMessage.includes("email not confirmed") ||
+      rawMessage.includes("not confirmed")
+    ) {
+      return "Email belum diverifikasi. Cek inbox/spam untuk verifikasi email sebelum login.";
+    }
+
+    if (rawMessage.includes("invalid login credentials")) {
+      return "Email atau password salah.";
+    }
+
+    return "Login gagal. Pastikan email dan password sudah benar.";
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      const { role } = await login(email, password);
+      const { role } = await login(email.trim(), password);
       // Redirect berdasarkan role
       if (role === "warga") navigate("/dashboard");
       else if (role === "komunitas") navigate("/dashboard-komunitas");
       else if (role === "admin") navigate("/dashboard/admin");
       else navigate("/dashboard");
-    } catch (err) {
-      setError("Email atau password salah.");
+    } catch (err: unknown) {
+      setError(getLoginErrorMessage(err));
     } finally {
       setIsLoading(false);
     }

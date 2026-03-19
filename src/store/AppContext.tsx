@@ -169,12 +169,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       userId: currentUser.id,
     };
     setReports([newReport, ...reports]);
-    
-    // Give points for reporting
-    setUsers(users.map(u => u.id === currentUser.id ? { ...u, points: u.points + 10 } : u));
-    if (currentUser.id === currentUser.id) {
-      setCurrentUser({ ...currentUser, points: currentUser.points + 10 });
-    }
   };
 
   const updateReportStatus = (id: string, status: ReportStatus, tips?: string) => {

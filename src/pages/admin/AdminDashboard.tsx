@@ -46,9 +46,24 @@ export const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // 1. Fetch Stats & Reports
-      const { data: allReports } = await supabase.from('reports').select('*').order('created_at', { ascending: false });
-      const { data: allUsers } = await supabase.from('users').select('*');
+      // 1. Fetch all reports for admin dashboard (without status/user filter or limit)
+      const { data: allReports, error: reportsError } = await supabase
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (reportsError) {
+        console.error(reportsError);
+        return;
+      }
+
+      console.log(allReports);
+
+      const { data: allUsers, error: usersError } = await supabase.from('users').select('*');
+      if (usersError) {
+        console.error(usersError);
+        return;
+      }
       
       const reports = allReports || [];
       const users = allUsers || [];
@@ -74,7 +89,7 @@ export const AdminDashboard = () => {
       }).reverse();
 
       const dailyData = last7Days.map(dateStr => {
-        const count = reports.filter(r => (r.created_at || r.createdAt)?.startsWith(dateStr)).length;
+        const count = reports.filter(r => r.created_at?.startsWith(dateStr)).length;
         // Format date for display
         const displayDate = new Date(dateStr).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
         return { name: displayDate, total: count };
@@ -83,7 +98,7 @@ export const AdminDashboard = () => {
 
       // Calculate Chart Data: Category Distribution
       const categoryCounts = reports.reduce((acc: any, cur: any) => {
-        const cat = cur.category || 'Lainnya';
+        const cat = cur.waste_type || cur.category || 'Lainnya';
         // Normalize name
         const normalizedCat = cat.toLowerCase().includes('organik') && !cat.toLowerCase().includes('anorganik') ? 'Organik' :
                               cat.toLowerCase().includes('anorganik') ? 'Anorganik' :
@@ -425,14 +440,14 @@ export const AdminDashboard = () => {
                               <div className="text-sm font-medium text-slate-900">{report.title}</div>
                               <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
                                 <Clock className="h-3 w-3" />
-                                {new Date(report.createdAt || report.created_at).toLocaleDateString('id-ID')}
+                                {new Date(report.created_at).toLocaleDateString('id-ID')}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="text-sm text-slate-900 capitalize px-2.5 py-1 bg-slate-100 rounded-md">
-                            {report.category}
+                            {report.waste_type || report.category || 'Lainnya'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">

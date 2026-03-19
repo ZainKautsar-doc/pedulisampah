@@ -12,7 +12,7 @@ export const AdminRewards = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | number | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
+    name: '',
     description: '',
     points_required: 0,
     stock: 0,
@@ -28,7 +28,11 @@ export const AdminRewards = () => {
   const fetchRewards = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase.from('rewards').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('rewards').select('*').order('created_at', { ascending: false });
+      if (error) {
+        console.error(error);
+        return;
+      }
       if (data) setRewards(data);
     } catch (error) {
       console.error('Error fetching rewards:', error);
@@ -69,7 +73,7 @@ export const AdminRewards = () => {
       }
 
       const payload = {
-        title: formData.title.trim(),
+        name: formData.name.trim(),
         description: formData.description.trim(),
         points_required: Math.floor(pointsRequired),
         stock: Math.floor(stock),
@@ -128,7 +132,7 @@ export const AdminRewards = () => {
 
   const editReward = (reward: any) => {
     setFormData({
-      title: reward.title || '',
+      name: reward.name || '',
       description: reward.description || '',
       points_required: reward.points_required || 0,
       stock: reward.stock || 0,
@@ -139,13 +143,13 @@ export const AdminRewards = () => {
   };
 
   const resetForm = () => {
-    setFormData({ title: '', description: '', points_required: 0, stock: 0, image_url: '' });
+    setFormData({ name: '', description: '', points_required: 0, stock: 0, image_url: '' });
     setEditingId(null);
     setShowForm(false);
   };
 
   const filteredRewards = rewards.filter(r => 
-    r.title?.toLowerCase().includes(searchTerm.toLowerCase())
+    r.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -199,8 +203,8 @@ export const AdminRewards = () => {
                 <input 
                   type="text" 
                   required
-                  value={formData.title}
-                  onChange={e => setFormData({...formData, title: e.target.value})}
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
                   className="w-full text-sm py-2 px-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -277,7 +281,7 @@ export const AdminRewards = () => {
                 <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
                   <img 
                     src={reward.image_url || 'https://picsum.photos/400/300?grayscale'} 
-                    alt={reward.title}
+                    alt={reward.name}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm font-bold text-emerald-600 shadow-sm flex items-center gap-1">
@@ -287,7 +291,7 @@ export const AdminRewards = () => {
                 </div>
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-slate-900">{reward.title}</h3>
+                    <h3 className="font-bold text-slate-900">{reward.name}</h3>
                     <span className="text-xs font-medium px-2 py-1 bg-slate-100 rounded text-slate-600 whitespace-nowrap ml-2">
                       Stok: {reward.stock}
                     </span>

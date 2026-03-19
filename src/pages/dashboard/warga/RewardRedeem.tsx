@@ -7,11 +7,12 @@ import { supabase } from '../../../lib/supabaseClient';
 
 type RewardItem = {
   id: string;
-  title: string;
+  name: string;
   description: string | null;
   points_required: number;
   stock: number;
   image_url: string | null;
+  icon?: string | null;
 };
 
 type RedeemHistoryItem = {
@@ -19,14 +20,20 @@ type RedeemHistoryItem = {
   voucher_code: string;
   status: string;
   created_at: string;
-  rewards: { title: string } | null;
+  rewards: {
+    id: string;
+    name: string;
+    description: string | null;
+    points_required: number;
+    icon: string | null;
+  } | null;
 };
 
 export const RewardRedeem = () => {
   const { currentUser, updateCurrentUserPoints } = useAppContext();
   const [rewards, setRewards] = useState<RewardItem[]>([]);
   const [history, setHistory] = useState<RedeemHistoryItem[]>([]);
-  const [userPoints, setUserPoints] = useState<number>(currentUser?.points || 0);
+  const [userPoints, setUserPoints] = useState<number>(currentUser?.points ?? 0);
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -42,7 +49,10 @@ export const RewardRedeem = () => {
       .select('*')
       .order('points_required', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error(error);
+      return;
+    }
     setRewards(data || []);
   };
 
@@ -53,8 +63,11 @@ export const RewardRedeem = () => {
       .eq('id', currentUser.id)
       .single();
 
-    if (error) throw error;
-    const nextPoints = data?.points || 0;
+    if (error) {
+      console.error(error);
+      return;
+    }
+    const nextPoints = data?.points ?? 0;
     setUserPoints(nextPoints);
     updateCurrentUserPoints(nextPoints);
   };
@@ -67,12 +80,21 @@ export const RewardRedeem = () => {
         voucher_code,
         status,
         created_at,
-        rewards(title)
+        rewards (
+          id,
+          name,
+          description,
+          points_required,
+          icon
+        )
       `)
       .eq('user_id', currentUser.id)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error(error);
+      return;
+    }
     setHistory((data || []) as RedeemHistoryItem[]);
   };
 
@@ -123,19 +145,19 @@ export const RewardRedeem = () => {
 
       const { data: rewardRow, error: rewardError } = await supabase
         .from('rewards')
-        .select('id, title, points_required, stock')
+        .select('id, name, points_required, stock')
         .eq('id', selectedRewardId)
         .single();
       if (rewardError) throw rewardError;
 
-      if ((userRow?.points || 0) < rewardRow.points_required) {
+      if ((userRow?.points ?? 0) < rewardRow.points_required) {
         setRedeemResult({ success: false, message: 'Poin kamu belum cukup untuk reward ini.' });
         setConfirmModalOpen(false);
         setModalOpen(true);
         return;
       }
 
-      if ((rewardRow?.stock || 0) <= 0) {
+      if ((rewardRow?.stock ?? 0) <= 0) {
         setRedeemResult({ success: false, message: 'Stok reward sudah habis.' });
         setConfirmModalOpen(false);
         setModalOpen(true);
@@ -201,7 +223,7 @@ export const RewardRedeem = () => {
         .insert([{
           user_id: currentUser.id,
           points_change: -rewardRow.points_required,
-          description: `Redeem reward: ${rewardRow.title}`
+          description: `Redeem reward: ${rewardRow.name}`
         }]);
 
       if (historyError) {
@@ -210,7 +232,7 @@ export const RewardRedeem = () => {
 
       setUserPoints(nextPoints);
       updateCurrentUserPoints(nextPoints);
-      await Promise.all([fetchRewards(), fetchMyHistory()]);
+      await Promise.all([fetchRewards(), fetchMyPoints(), fetchMyHistory()]);
 
       setRedeemResult({ success: true, code: voucherCode });
       setConfirmModalOpen(false);
@@ -291,7 +313,7 @@ export const RewardRedeem = () => {
           >
             <div className="h-40 bg-gradient-to-br from-emerald-50/80 to-teal-50/80 flex items-center justify-center border-b border-emerald-100/50 group-hover:from-emerald-100/80 group-hover:to-teal-100/80 transition-colors duration-300 overflow-hidden">
               {reward.image_url ? (
-                <img src={reward.image_url} alt={reward.title} className="w-full h-full object-cover" />
+                <img src={reward.image_url} alt={reward.name} className="w-full h-full object-cover" />
               ) : (
               <motion.div
                 whileHover={{ rotate: [0, -10, 10, -10, 0], transition: { duration: 0.5 } }}
@@ -301,7 +323,7 @@ export const RewardRedeem = () => {
               )}
             </div>
             <div className="p-6 flex-1 flex flex-col bg-white/40">
-              <h3 className="text-lg font-bold text-slate-900 mb-2">{reward.title}</h3>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">{reward.name}</h3>
               <p className="text-sm text-slate-500 mb-3 flex-1">{reward.description || '-'}</p>
               <p className="text-xs text-slate-500 mb-4">Stok: <span className="font-semibold">{reward.stock}</span></p>
               
@@ -343,7 +365,7 @@ export const RewardRedeem = () => {
             return (
               <div key={item.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
                 <div>
-                  <h4 className="text-md font-bold text-slate-900">{item.rewards?.title || 'Reward Tidak Diketahui'}</h4>
+                  <h4 className="text-md font-bold text-slate-900">{item.rewards?.name || 'Reward Tidak Diketahui'}</h4>
                   <p className="text-sm text-slate-500 mt-1">{new Date(item.created_at).toLocaleDateString('id-ID')}</p>
                   <p className="text-xs text-slate-500 mt-1">Status: <span className="font-semibold">{item.status || 'active'}</span></p>
                 </div>
@@ -389,7 +411,7 @@ export const RewardRedeem = () => {
                       </h3>
                       <div className="mt-2">
                         <p className="text-sm text-slate-500">
-                          Apakah Anda yakin ingin menukarkan <span className="font-bold text-slate-900">{rewards.find(r => r.id === selectedRewardId)?.points_required} poin</span> untuk mendapatkan <span className="font-bold text-slate-900">{rewards.find(r => r.id === selectedRewardId)?.title}</span>?
+                          Apakah Anda yakin ingin menukarkan <span className="font-bold text-slate-900">{rewards.find(r => r.id === selectedRewardId)?.points_required} poin</span> untuk mendapatkan <span className="font-bold text-slate-900">{rewards.find(r => r.id === selectedRewardId)?.name}</span>?
                         </p>
                       </div>
                     </div>

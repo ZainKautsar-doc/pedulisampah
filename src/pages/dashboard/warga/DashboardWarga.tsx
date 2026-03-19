@@ -2,6 +2,7 @@ import { DashboardLayout } from '../../../components/layout/DashboardLayout';
 import { useAppContext } from '../../../store/AppContext';
 import { FileText, Clock, Gift } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 export const DashboardWarga = () => {
   const { currentUser, reports } = useAppContext();
@@ -79,8 +80,14 @@ export const DashboardWarga = () => {
         transition={{ delay: 0.3, duration: 0.5 }}
         className="glass-card rounded-3xl overflow-hidden"
       >
-        <div className="px-6 py-5 border-b border-slate-100/50 bg-white/40">
+        <div className="px-6 py-5 border-b border-slate-100/50 bg-white/40 flex items-center justify-between gap-3">
           <h3 className="text-lg font-bold text-slate-900">Laporan Terakhir Kamu</h3>
+          <Link
+            to="/dashboard/warga/riwayat"
+            className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 active:bg-emerald-200 transition-colors"
+          >
+            Lihat Riwayat
+          </Link>
         </div>
         <div className="divide-y divide-slate-100/50">
           {myReports.slice(0, 3).length > 0 ? (

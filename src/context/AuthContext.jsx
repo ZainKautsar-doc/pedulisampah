@@ -66,7 +66,13 @@ export const AuthProvider = ({ children }) => {
       email,
       password
     });
-    if (error) throw error;
+    if (error) {
+      if (error.message?.toLowerCase().includes('email not confirmed')) {
+        const emailNotConfirmedError = new Error('EMAIL_NOT_CONFIRMED');
+        throw emailNotConfirmedError;
+      }
+      throw error;
+    }
     
     // Fetch role for immediate redirect
     let role = 'warga';

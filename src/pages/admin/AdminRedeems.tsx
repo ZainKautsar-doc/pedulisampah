@@ -16,15 +16,19 @@ export const AdminRedeems = () => {
     setLoading(true);
     try {
       // Joining with users & rewards using foreign keys mapping
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('redeems')
         .select(`
           *,
           users(name, email),
-          rewards(title, points_required)
+          rewards(name, description, points_required, icon)
         `)
         .order('created_at', { ascending: false });
 
+      if (error) {
+        console.error(error);
+        return;
+      }
       if (data) setRedeems(data);
     } catch (error) {
       console.error('Error fetching redeems:', error);
@@ -45,7 +49,7 @@ export const AdminRedeems = () => {
   const filteredRedeems = redeems.filter(r => 
     r.users?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.voucher_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.rewards?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+    r.rewards?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -112,7 +116,7 @@ export const AdminRedeems = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div className="text-sm font-medium text-slate-900 max-w-[200px] truncate">
-                            {redeem.rewards?.title || 'Reward Dihapus'}
+                            {redeem.rewards?.name || 'Reward Dihapus'}
                           </div>
                           <span className="text-xs font-medium px-2 py-0.5 bg-amber-50 text-amber-600 rounded">
                             -{redeem.points_spent ?? redeem.rewards?.points_required ?? 0} Poin

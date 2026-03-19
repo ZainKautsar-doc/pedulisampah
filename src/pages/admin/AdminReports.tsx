@@ -22,10 +22,17 @@ export const AdminReports = () => {
   const fetchReports = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('reports')
         .select('*')
         .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error(error);
+        return;
+      }
+
+      console.log(data);
       
       if (data) setReports(data);
     } catch (error) {
@@ -171,14 +178,14 @@ export const AdminReports = () => {
                         <div className="min-w-0">
                           <h2 className="text-sm font-bold text-slate-900 line-clamp-2">{report.title}</h2>
                           <div className="mt-2 inline-flex text-[11px] text-slate-600 bg-slate-100 uppercase px-2 py-0.5 rounded">
-                            {report.category || 'Lainnya'}
+                            {report.waste_type || report.category || 'Lainnya'}
                           </div>
                           <div className="mt-3 space-y-1 text-xs text-slate-600">
                             <p className="flex items-start gap-1.5">
                               <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                               <span className="line-clamp-2">{report.location_name || 'Lokasi tidak tersedia'}</span>
                             </p>
-                            <p className="text-slate-500">{report.lat}, {report.lng}</p>
+                            <p className="text-slate-500">{report.latitude ?? report.lat}, {report.longitude ?? report.lng}</p>
                           </div>
                         </div>
                       </div>

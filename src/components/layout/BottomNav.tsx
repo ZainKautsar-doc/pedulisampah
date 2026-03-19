@@ -2,11 +2,12 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
   Home,
-  MapPin,
   FileText,
   Trophy,
   User,
   Gift,
+  History,
+  MapPin,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -43,7 +44,7 @@ export const BottomNav = () => {
         : null;
 
   const authLinks =
-    user?.role === "admin" || user?.role === "warga"
+    user?.role === "admin"
       ? [
           { name: "Beranda", path: homePath, icon: Home },
           { name: "Laporan", path: reportPath, icon: FileText },
@@ -55,13 +56,29 @@ export const BottomNav = () => {
           { name: "Peta", path: "/peta", icon: MapPin },
           { name: "Profil", path: profilePath, icon: User },
         ]
-      : [
-          { name: "Beranda", path: homePath, icon: Home },
-          { name: "Laporan", path: reportPath, icon: FileText },
-          { name: "Peta", path: "/peta", icon: MapPin },
-          { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
-          { name: "Profil", path: profilePath, icon: User },
-        ];
+      : user?.role === "warga"
+        ? [
+            { name: "Beranda", path: homePath, icon: Home },
+            { name: "Laporan", path: reportPath, icon: FileText },
+            {
+              name: "Reward",
+              path: rewardPath || "/dashboard/warga/reward",
+              icon: Gift,
+            },
+            {
+              name: "Riwayat",
+              path: "/dashboard/warga/riwayat",
+              icon: History,
+            },
+            { name: "Profil", path: profilePath, icon: User },
+          ]
+        : [
+            { name: "Beranda", path: homePath, icon: Home },
+            { name: "Laporan", path: reportPath, icon: FileText },
+            { name: "Peta", path: "/peta", icon: MapPin },
+            { name: "Leaderboard", path: "/leaderboard", icon: Trophy },
+            { name: "Profil", path: profilePath, icon: User },
+          ];
 
   const links = authLinks;
 

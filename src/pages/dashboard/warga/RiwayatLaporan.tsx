@@ -100,151 +100,104 @@ export const RiwayatLaporan = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="glass-card rounded-3xl overflow-hidden"
+        className="glass-card rounded-3xl overflow-hidden w-full"
       >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200/60">
-            <thead className="bg-slate-50/50 backdrop-blur-sm">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider"
-                >
-                  Info Laporan
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider"
-                >
-                  Lokasi
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider"
-                >
-                  Status
-                </th>
-                <th
-                  scope="col"
-                  className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider"
-                >
-                  Tanggal
-                </th>
-              </tr>
-            </thead>
-            <motion.tbody
+        <div className="p-4 sm:p-6 overflow-x-hidden">
+          {isLoading ? (
+            <div className="py-10 text-center text-slate-500">
+              Memuat riwayat laporan...
+            </div>
+          ) : errorMessage ? (
+            <div className="py-10 text-center text-red-600 font-medium">
+              {errorMessage}
+            </div>
+          ) : safeReports.length > 0 ? (
+            <motion.div
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="bg-white/40 divide-y divide-slate-200/60"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5"
             >
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    Memuat riwayat laporan...
-                  </td>
-                </tr>
-              ) : errorMessage ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-12 text-center text-red-600 font-medium"
-                  >
-                    {errorMessage}
-                  </td>
-                </tr>
-              ) : safeReports.length > 0 ? (
-                safeReports.map((report) => (
-                  <motion.tr
-                    variants={itemVariants}
-                    key={report.id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-16 w-16">
-                          <img
-                            className="h-16 w-16 rounded-xl object-cover shadow-sm"
-                            src={report.photoUrl}
-                            alt=""
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-bold text-slate-900">
-                            {report.title}
-                          </div>
-                          <div className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-medium">
-                            {report.category}
-                          </div>
-                        </div>
-                      </div>
-                      {report.userTip && (
-                        <div className="mt-2 inline-flex items-center gap-1 bg-emerald-50/80 text-emerald-700 px-2 py-1 rounded-md text-xs font-medium border border-emerald-100/50 shadow-sm">
-                          <Heart className="h-3 w-3" />
-                          Tip Anda: {report.userTip}
-                        </div>
-                      )}
-                      {report.tips && (
-                        <div className="mt-3 bg-blue-50/80 p-3 rounded-xl flex items-start gap-2 border border-blue-100/50 shadow-sm">
-                          <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                          <p className="text-xs text-blue-800 leading-relaxed">
-                            <span className="font-bold">Tips Petugas:</span>{" "}
-                            {report.tips}
-                          </p>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center text-sm text-slate-500">
-                        <MapPin className="h-4 w-4 mr-1 text-slate-400 flex-shrink-0" />
-                        {Number.isFinite(report.lat) &&
-                        Number.isFinite(report.lng) ? (
-                          <AddressDisplay
-                            lat={report.lat}
-                            lng={report.lng}
-                            className="truncate max-w-[150px] sm:max-w-[250px]"
-                          />
-                        ) : (
-                          <span>-</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
-                          report.status === "Selesai"
-                            ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                            : report.status === "Ditolak"
-                              ? "bg-red-100 text-red-800 border border-red-200"
-                              : report.status === "Menunggu Verifikasi"
-                                ? "bg-slate-100 text-slate-800 border border-slate-200"
-                                : "bg-orange-100 text-orange-800 border border-orange-200"
-                        }`}
-                      >
-                        {report.status}
+              {safeReports.map((report) => (
+                <motion.article
+                  variants={itemVariants}
+                  key={report.id}
+                  className="rounded-2xl border border-slate-200/70 bg-white/70 p-4 sm:p-5 shadow-sm hover:bg-slate-50/80 transition-colors overflow-hidden"
+                >
+                  <div className="flex items-start gap-3">
+                    <img
+                      className="h-16 w-16 sm:h-20 sm:w-20 rounded-xl object-cover shadow-sm flex-shrink-0"
+                      src={report.photoUrl}
+                      alt={report.title}
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                        {report.title}
+                      </h3>
+                      <span className="mt-2 inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide bg-slate-100 text-slate-700 border border-slate-200">
+                        {report.category}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 font-medium">
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-2 text-sm">
+                    <div className="flex items-center text-slate-600 min-w-0">
+                      <MapPin className="h-4 w-4 mr-1.5 text-slate-400 flex-shrink-0" />
+                      {Number.isFinite(report.lat) && Number.isFinite(report.lng) ? (
+                        <AddressDisplay
+                          lat={report.lat}
+                          lng={report.lng}
+                          className="truncate max-w-full"
+                        />
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </div>
+                    <p className="text-slate-500 text-xs sm:text-sm">
                       {formatReportDate(report.createdAt)}
-                    </td>
-                  </motion.tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    Belum ada riwayat laporan.
-                  </td>
-                </tr>
-              )}
-            </motion.tbody>
-          </table>
+                    </p>
+                  </div>
+
+                  <div className="mt-4 flex items-center justify-between gap-3">
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm ${
+                        report.status === "Selesai"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                          : report.status === "Ditolak"
+                            ? "bg-red-100 text-red-800 border border-red-200"
+                            : report.status === "Menunggu Verifikasi"
+                              ? "bg-slate-100 text-slate-800 border border-slate-200"
+                              : "bg-orange-100 text-orange-800 border border-orange-200"
+                      }`}
+                    >
+                      {report.status}
+                    </span>
+                    {report.userTip && (
+                      <span className="inline-flex items-center gap-1 bg-emerald-50/80 text-emerald-700 px-2 py-1 rounded-md text-xs font-medium border border-emerald-100/50">
+                        <Heart className="h-3 w-3" />
+                        Tip Anda
+                      </span>
+                    )}
+                  </div>
+
+                  {report.tips && (
+                    <div className="mt-3 bg-blue-50/80 p-3 rounded-xl flex items-start gap-2 border border-blue-100/50">
+                      <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-xs text-blue-800 leading-relaxed line-clamp-2">
+                        <span className="font-bold">Tips Petugas:</span>{" "}
+                        {report.tips}
+                      </p>
+                    </div>
+                  )}
+                </motion.article>
+              ))}
+            </motion.div>
+          ) : (
+            <div className="py-10 text-center text-slate-500">
+              Belum ada riwayat laporan.
+            </div>
+          )}
         </div>
       </motion.div>
     </DashboardLayout>

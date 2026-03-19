@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { PublicLayout } from '../../components/layout/PublicLayout';
 import { supabase } from '../../lib/supabaseClient';
@@ -11,18 +11,25 @@ export const RegisterPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successDescription, setSuccessDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const okButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (showSuccessModal) {
+      okButtonRef.current?.focus();
+    }
+  }, [showSuccessModal]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-    setSuccess('');
     
     try {
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           data: {
@@ -32,18 +39,25 @@ export const RegisterPage = () => {
       });
       
       if (signUpError) throw signUpError;
-      
-      setSuccess("Akun berhasil dibuat. Silakan login.");
-      // Optional auto redirect
-      setTimeout(() => {
-        navigate('/login');
-      }, 2000);
+
+      const needsEmailVerification = !data.session;
+      setSuccessDescription(
+        needsEmailVerification
+          ? "Silakan cek inbox email Anda untuk melakukan verifikasi akun sebelum login. Jika email tidak ditemukan, periksa folder spam atau promotion."
+          : "Akun berhasil dibuat. Silakan login.",
+      );
+      setShowSuccessModal(true);
       
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan saat pendaftaran.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    navigate('/login');
   };
 
   return (
@@ -91,17 +105,6 @@ export const RegisterPage = () => {
               </motion.div>
             )}
             
-            {success && (
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="bg-emerald-50 text-emerald-700 p-4 rounded-xl text-sm font-medium flex items-center gap-2 border border-emerald-200"
-              >
-                <CheckCircle2 className="h-5 w-5 shrink-0" />
-                {success}
-              </motion.div>
-            )}
           </AnimatePresence>
 
           <form className="mt-8 space-y-6" onSubmit={handleRegister}>
@@ -162,7 +165,7 @@ export const RegisterPage = () => {
 
             <button
               type="submit"
-              disabled={isLoading || !!success}
+              disabled={isLoading || showSuccessModal}
               className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Mendaftarkan...' : 'Daftar Sekarang'}
@@ -179,6 +182,47 @@ export const RegisterPage = () => {
             </Link>
           </div>
         </motion.div>
+
+        <AnimatePresence>
+          {showSuccessModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center px-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="signup-success-title"
+            >
+              <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                transition={{ duration: 0.2 }}
+                className="relative w-full max-w-md rounded-3xl border border-white/30 bg-white p-6 sm:p-7 shadow-2xl"
+              >
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 border border-emerald-200">
+                  <CheckCircle2 className="h-7 w-7 text-emerald-600" />
+                </div>
+                <h3 id="signup-success-title" className="text-center text-xl font-bold text-slate-900">
+                  Akun Berhasil Dibuat
+                </h3>
+                <p className="mt-3 text-center text-sm leading-relaxed text-slate-600">
+                  {successDescription}
+                </p>
+                <button
+                  ref={okButtonRef}
+                  type="button"
+                  onClick={handleCloseSuccessModal}
+                  className="mt-6 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-3 text-sm font-bold text-white shadow-md transition-all hover:from-emerald-500 hover:to-teal-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                >
+                  OK
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </PublicLayout>
   );

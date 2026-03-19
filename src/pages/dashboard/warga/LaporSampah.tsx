@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "../../../components/layout/DashboardLayout";
 import { useAppContext, WasteCategory } from "../../../store/AppContext";
+import { useAuth } from "../../../context/AuthContext";
+import { supabase } from "../../../lib/supabaseClient";
 import {
   MapContainer,
   TileLayer,
@@ -23,6 +25,7 @@ import { GoogleGenAI } from "@google/genai";
 import { motion } from "framer-motion";
 
 type ReportCategory = Exclude<WasteCategory, "belum terdeteksi">;
+const POINT_REWARD = 10;
 
 const CATEGORY_OPTIONS: Array<{ value: ReportCategory; label: string }> = [
   { value: "organik", label: "Organik" },
@@ -69,7 +72,8 @@ const LocationMarker = ({
 };
 
 export const LaporSampah = () => {
-  const { addReport } = useAppContext();
+  const { addReport, updateCurrentUserPoints } = useAppContext();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
@@ -228,7 +232,7 @@ export const LaporSampah = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !photoUrl || !position) {
       alert(
@@ -244,8 +248,69 @@ export const LaporSampah = () => {
 
     setIsSubmitting(true);
 
-    // Simulate network delay
-    setTimeout(() => {
+    try {
+      if (!user?.id) {
+        throw new Error("User tidak ditemukan. Silakan login ulang.");
+      }
+
+      const { data: report, error: reportError } = await supabase
+        .from("reports")
+        .insert({
+          user_id: user.id,
+          title,
+          description,
+          photo_url: photoUrl,
+          waste_type: category,
+          latitude: position.lat,
+          longitude: position.lng,
+          location_name: addressName || null,
+          status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (reportError) {
+        console.error(reportError);
+        throw reportError;
+      }
+
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("points")
+        .eq("id", user.id)
+        .single();
+
+      if (userError) {
+        console.error(userError);
+        throw userError;
+      }
+
+      const newPoints = (userData?.points ?? 0) + POINT_REWARD;
+
+      const { error: updatePointsError } = await supabase
+        .from("users")
+        .update({ points: newPoints })
+        .eq("id", user.id);
+
+      if (updatePointsError) {
+        console.error(updatePointsError);
+        throw updatePointsError;
+      }
+
+      const { error: historyError } = await supabase
+        .from("points_history")
+        .insert({
+          user_id: user.id,
+          points: POINT_REWARD,
+          type: "earn",
+          reference_id: report.id,
+        });
+
+      if (historyError) {
+        console.error(historyError);
+        throw historyError;
+      }
+
       addReport({
         title,
         description,
@@ -256,13 +321,18 @@ export const LaporSampah = () => {
         userTip: tip || undefined,
       });
 
-      setIsSubmitting(false);
+      updateCurrentUserPoints(newPoints);
       setSuccess(true);
 
       setTimeout(() => {
         navigate("/dashboard/warga/riwayat");
       }, 2000);
-    }, 1000);
+    } catch (error) {
+      console.error("Error submitting report and updating points:", error);
+      alert("Gagal mengirim laporan atau menambah poin. Silakan coba lagi.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (success) {
