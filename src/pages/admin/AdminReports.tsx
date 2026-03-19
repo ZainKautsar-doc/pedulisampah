@@ -9,6 +9,7 @@ export const AdminReports = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   // Status editing state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -18,6 +19,27 @@ export const AdminReports = () => {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  const verifyAdminAccess = async () => {
+    if (!user?.id) {
+      throw new Error('Sesi login tidak valid. Silakan login ulang.');
+    }
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, role')
+      .eq('id', user.id)
+      .single();
+
+    if (error) {
+      console.error('[AdminReports] Failed to verify admin role:', error.message, error);
+      throw new Error(`Gagal verifikasi role admin: ${error.message}`);
+    }
+
+    if (data?.role !== 'admin') {
+      throw new Error('Akses ditolak. Hanya admin yang dapat mengubah status laporan.');
+    }
+  };
 
   const fetchReports = async () => {
     setLoading(true);
@@ -42,12 +64,22 @@ export const AdminReports = () => {
 
   const handleUpdateStatus = async (reportId: string) => {
     if (!newStatus) return setEditingId(null);
+    if (updating) return;
+
+    setFeedback(null);
     setUpdating(true);
 
     try {
+      await verifyAdminAccess();
       const currentReport = reports.find((r) => r.id === reportId);
       if (!currentReport) throw new Error('Laporan tidak ditemukan.');
       if (!user?.id) throw new Error('User admin tidak valid.');
+
+      console.log('[AdminReports] Updating report status:', {
+        report_id: reportId,
+        old_status: currentReport.status,
+        new_status: newStatus,
+      });
 
       // 1. Update the report status
       const { error: updateError } = await supabase
@@ -55,7 +87,15 @@ export const AdminReports = () => {
         .update({ status: newStatus })
         .eq('id', reportId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('[AdminReports] Update status failed:', updateError.message, updateError);
+        throw new Error(updateError.message);
+      }
+
+      console.log('[AdminReports] Report status updated successfully:', {
+        report_id: reportId,
+        new_status: newStatus,
+      });
 
       // 2. Insert into report_updates for activity tracking
       const { error: updateLogError } = await supabase
@@ -69,15 +109,17 @@ export const AdminReports = () => {
         });
 
       if (updateLogError) {
-        console.error(updateLogError);
+        console.error('[AdminReports] Failed to insert report update log:', updateLogError.message, updateLogError);
       }
 
       // 3. Update local state
       setReports(reports.map(r => r.id === reportId ? { ...r, status: newStatus } : r));
       setEditingId(null);
-    } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Gagal memperbarui status');
+      setFeedback({ type: 'success', text: 'Status laporan berhasil diperbarui.' });
+    } catch (error: any) {
+      const message = error?.message || 'Gagal memperbarui status laporan.';
+      console.error('[AdminReports] Error updating status:', message, error);
+      setFeedback({ type: 'error', text: `Gagal memperbarui status: ${message}` });
     } finally {
       setUpdating(false);
     }
@@ -151,6 +193,18 @@ export const AdminReports = () => {
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 md:p-6">
+          {feedback && (
+            <div
+              className={`mb-4 rounded-xl border px-4 py-3 text-sm font-medium ${
+                feedback.type === 'success'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-red-200 bg-red-50 text-red-700'
+              }`}
+            >
+              {feedback.text}
+            </div>
+          )}
+
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-slate-500">
               {loading ? 'Memuat laporan...' : `${filteredReports.length} laporan ditemukan`}
